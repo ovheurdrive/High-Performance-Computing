@@ -14,7 +14,7 @@ int** create_matrix(int m_size) {
 int** fill_matrix(int **matrix, int m_size) {
   for( int i=0; i<m_size; i++ ) {
     for( int j=0; j<m_size; j++ ) {
-      matrix[i][j] = i + j ;
+      matrix[i][j] = (int)rand() / (int)(RAND_MAX/50) ;
     }
   }
   return matrix;
@@ -46,10 +46,10 @@ void free_matrix(int** matrix, int m_size) {
   free(matrix);
 }
 
-int *create_and_fill_vector(int v_size){
+int *create_and_fill_vector(int v_size, int seed){
   int* vector = malloc(v_size * sizeof(int));
   for( int i = 0; i<v_size; i++){
-    vector[i] = (i+3)*(i+3)/2;
+    vector[i] = (int)rand() / (int)(RAND_MAX/seed);
   }
   return vector;
 }
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   else {
     local_num_rows = sub_size;
   }
-  local_vector = create_and_fill_vector(local_num_rows);
+  local_vector = create_and_fill_vector(local_num_rows, (int)rand()/(int)(RAND_MAX/10) * (rank+1));
   int* local_result = calloc(local_num_rows, sizeof(int));
   
 
