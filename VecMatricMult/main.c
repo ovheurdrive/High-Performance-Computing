@@ -28,7 +28,15 @@ void display_matrix(int** matrix, int m_size) {
     }
     printf(")\n");
   }
-  printf("\n");
+  printf("\n\n");
+}
+
+void display_vector(int* vector, int m_size) {
+  printf(" vector : ( ");
+  for(int j=0; j<m_size; j++) {
+    printf("%d ", vector[j]);
+  }
+  printf(")\n");
 }
 
 void free_matrix(int** matrix, int m_size) {
@@ -36,6 +44,14 @@ void free_matrix(int** matrix, int m_size) {
     free(matrix[i]);
   }
   free(matrix);
+}
+
+int *create_and_fill_vector(int v_size){
+  int* vector = malloc(v_size * sizeof(int));
+  for( int i = 0; i<v_size; i++){
+    vector[i] = (i+3)*(i+3)/2;
+  }
+  return vector;
 }
 
 int main(int argc, char* argv[]) {
@@ -52,59 +68,82 @@ int main(int argc, char* argv[]) {
   int** matrix = create_matrix(m_size);
   matrix = fill_matrix(matrix,m_size);
   
-  int* vector = malloc( m_size * sizeof(int));
-  for(int k=0; k<m_size; k++) {
-    vector[k] = (k + 3)/2;
-  }
-  int** sub_matrix;
+  int *global_result = calloc( m_size, sizeof(int));
+  int *global_vector = malloc( m_size * sizeof(int));
+
   int sub_size = m_size / size;
-  printf("Computing in proc %d\n", rank);
-  if( rank == 0 ) {
-    for( int i = 0; i< sub_size; i++) {
-      for( int j=0; j<m_size; j++) {
-        matrix[i][j] = matrix[i][j] * vector[i];
-      }
-    }
 
-    int** matrix_from_sub_proc;
+// Generating local vectors for each process
 
-    for( int k = 1; k<size; k++) {
-      printf("Receiving data from proc %d\n", k);
-      MPI_Recv(matrix_from_sub_proc, m_size, MPI_INT, k, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      if( rank == size -1){
-        for(int i=k*sub_size; i<k*(sub_size+1); i++ ) {
-          matrix[i] = matrix_from_sub_proc[i];
-        }
-      }
-      else {
-        for(int i=k*sub_size; i<m_size; i++ ) {
-          matrix[i] = matrix_from_sub_proc[i];
-        }
-      }
-    }
-    display_matrix(matrix,m_size);
-  }
-  else if( rank == size-1 ) {
-    printf("Last proc");  
-    for(int i=rank*sub_size; i<m_size; i++ ) {
-      for( int j=0; j<m_size; j++) {
-        matrix[i][j] = matrix[i][j] * vector[i];
-      }
-    }
-    MPI_Send(matrix, m_size, MPI_INT, 0, 1,  MPI_COMM_WORLD);
+  int* local_vector;
+  int local_num_rows;
+  if(rank == size-1) {
+    display_matrix(matrix, m_size);
+    local_num_rows = m_size - (rank)*sub_size;
   }
   else {
-    printf("Not last proc");
-    for(int i=rank*sub_size; i<rank*(sub_size+1); i++ ) {
-      for( int j=0; j<m_size; j++) {
-        matrix[i][j] = matrix[i][j] * vector[i];
+    local_num_rows = sub_size;
+  }
+  local_vector = create_and_fill_vector(local_num_rows);
+  int* local_result = calloc(local_num_rows, sizeof(int));
+  
+
+// Sending local vectors to every process
+  
+  for(int k=0; k<size; k++) {
+    if( k == rank ) {
+      for(int i=0; i<local_num_rows; i++){
+        global_vector[k*sub_size+i] = local_vector[i];
+      }
+      continue;
+    }
+
+    int tmp_size;
+    MPI_Send(&local_num_rows, 1, MPI_INT, k, 0, MPI_COMM_WORLD);
+    MPI_Send(local_vector, local_num_rows, MPI_INT, k, 1, MPI_COMM_WORLD);
+    MPI_Recv(&tmp_size, 1, MPI_INT, k, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    int tmp_vector[tmp_size];
+    MPI_Recv(tmp_vector, tmp_size, MPI_INT, k, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    for(int i=0; i<tmp_size; i++){
+      global_vector[k*sub_size+i] = tmp_vector[i];
+    }
+  }
+
+// Calculating local matrix vector multiplication
+  if( rank == size - 1){
+    
+    for( int i = 0; i<local_num_rows; i++) {
+      for( int j = 0; j<m_size; j++) {
+        global_result[rank*sub_size+i] += matrix[rank*sub_size+i][j] * global_vector[j];
       }
     }
-    MPI_Send(matrix, m_size, MPI_INT, 0, 1,  MPI_COMM_WORLD);
+    for( int k = 0; k<size-1; k++) {
+      int tmp_size;
+      MPI_Recv(&tmp_size, 1, MPI_INT, k, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      int tmp_result[tmp_size];
+      MPI_Recv(tmp_result, tmp_size, MPI_INT, k, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      for( int i = 0; i<tmp_size; i++) {
+        global_result[k*sub_size+i] = tmp_result[i];
+      }
+    }
+    display_vector(global_vector, m_size);
+    display_vector(global_result,m_size);
+  }
+  else {
+    for( int i = 0; i<local_num_rows; i++) {
+      for( int j = 0; j<m_size; j++) {
+        local_result[i] += matrix[rank*sub_size+i][j] * global_vector[j];
+      }
+    }
+    MPI_Send(&local_num_rows, 1, MPI_INT, size-1, 2, MPI_COMM_WORLD);
+    MPI_Send(local_result, local_num_rows, MPI_INT, size-1, 3, MPI_COMM_WORLD);
   }
 
   free_matrix(matrix,m_size);
-  free(vector);
+  free(local_vector);
+  free(global_vector);
+  free(global_result);
+  free(local_result);
   MPI_Finalize();
   return 0;
 }
