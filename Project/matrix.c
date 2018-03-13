@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <mpi.h>
 #include "matrix.h"
 
 int build_matrix( const unsigned int dimension_columns, const unsigned int dimension_rows, Matrix* mtx){
@@ -9,7 +8,6 @@ int build_matrix( const unsigned int dimension_columns, const unsigned int dimen
   mtx->rows = dimension_rows;
   mtx->matrix = malloc( mtx->rows * sizeof(int*));
   if(mtx->matrix == NULL){
-    MPI_Abort();
     return ENOMEM;
   }
   for( int i = 0; i < mtx->rows; i++ ) {
@@ -17,7 +15,6 @@ int build_matrix( const unsigned int dimension_columns, const unsigned int dimen
     if(mtx->matrix[i] == NULL){
       mtx->rows = i;
       free_matrix(mtx);
-      MPI_Abort();
       return ENOMEM;
     }
   }
@@ -44,4 +41,12 @@ void free_matrix(Matrix* mtx) {
   mtx->rows = 0;
   mtx->col = 0;
   mtx->matrix = NULL;
+}
+
+void randomize_matrix(Matrix* mtx, int max) {
+  for( int i = 0; i < mtx->rows; i++ ) {
+    for( int j = 0; j < mtx->col; j++ ) {
+      mtx->matrix[i][j] =  (int)rand() / (RAND_MAX/max);
+    }
+  }
 }

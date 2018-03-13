@@ -7,6 +7,7 @@
 #include "main.h"
 
 int main( int argc, char* argv[]) {
+  int ret = 0;
   unsigned int dim_row,dim_col;
   if( argc > 2) {
     dim_row = atoi(argv[1]);
@@ -21,15 +22,26 @@ int main( int argc, char* argv[]) {
 
 
   Matrix mtx = { 0, 0, NULL };
-  build_matrix(dim_row, dim_col, &mtx);
+
+  if( ret = build_matrix(dim_col, dim_row, &mtx) != 0) {
+    MPI_Abort(MPI_COMM_WORLD, ret);
+    return ret;
+  }
+  randomize_matrix(&mtx,100);
   display_matrix(&mtx);
   free_matrix(&mtx);
 
   Vector vect = { 0, NULL };
-  build_vector(dim_row,&vect);
+
+  if( ret = build_vector(dim_row,&vect) != 0 ) {
+    MPI_Abort(MPI_COMM_WORLD, ret);
+    return ret;
+  }
+
+  randomize_vector(&vect, 20);
   display_vector(&vect);
   free_vector(&vect);
 
   MPI_Finalize();
-  return 0;
+  return ret;
 }
