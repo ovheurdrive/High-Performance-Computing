@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <time.h>
 #include "matrix.h"
 
 int build_matrix( const unsigned int dimension_columns, const unsigned int dimension_rows, Matrix* mtx){
@@ -44,9 +45,11 @@ void free_matrix(Matrix* mtx) {
 }
 
 void randomize_matrix(Matrix* mtx, int max) {
+  time_t t;
+  srand((unsigned) time(&t));
   for( int i = 0; i < mtx->rows; i++ ) {
     for( int j = 0; j < mtx->col; j++ ) {
-      mtx->matrix[i][j] =  (int)rand() / (RAND_MAX/max);
+      mtx->matrix[i][j] =  (int)rand() % max;
     }
   }
 }

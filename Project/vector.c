@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <time.h>
 #include "vector.h"
 
 int build_vector( const unsigned int size, Vector* vect) {
@@ -27,7 +28,9 @@ void free_vector(Vector* vect){
 }
 
 void randomize_vector(Vector* vect, int max) {
+  time_t t;
+  srand((unsigned) time(&t));
   for( int i = 0; i < vect->size; i++ ) {
-    vect->vector[i] = (int)rand() / (RAND_MAX/max);
+    vect->vector[i] = (int)rand() % max;
   }
 }
