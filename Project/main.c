@@ -45,7 +45,7 @@ int main( int argc, char* argv[]) {
   }
 
   randomize_vector(&vect, 20);
-  display_vector(&vect);
+  display_vector(&vect, "Vector random : ");
   free_vector(&vect);
 
   MPI_Finalize();

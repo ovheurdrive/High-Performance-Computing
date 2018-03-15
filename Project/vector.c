@@ -13,8 +13,8 @@ int build_vector( const unsigned int size, Vector* vect) {
   return 0;
 }
 
-void display_vector(Vector* vect) {
-  printf("( ");
+void display_vector(Vector* vect, const char* message) {
+  printf("%s ( ", message);
   for(int i = 0; i < vect->size; i++) {
     printf("%d ", vect->vector[i]);
   }
