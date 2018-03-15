@@ -50,6 +50,7 @@ int main( int argc, char* argv[]) {
 
   if( (ret = build_vector(dim_row,&vect)) != 0 ) {
     fprintf(stderr, "Out of memory");
+    free_matrix(&mtx);
     MPI_Abort(MPI_COMM_WORLD, ret);
   }
 
@@ -59,6 +60,7 @@ int main( int argc, char* argv[]) {
 
   if( (ret = read_vector_from_file(&vect, "data/vector_test.txt")) != 0) {
     fprintf(stderr, "Error when constructing vector from file in proc %d\n", rank);
+    free_matrix(&mtx);
     MPI_Abort(MPI_COMM_WORLD, ret);
   }
   display_vector(&vect, "Vector from file : ");

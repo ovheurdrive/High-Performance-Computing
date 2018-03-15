@@ -48,7 +48,7 @@ int read_vector_from_file(Vector* vect,char* filepath) {
     build_vector(size, vect);
     for( int i = 0; i < vect->size; i++ ) {
       if( fscanf(file, "%d \n", &vect->vector[i]) < 1 ) {
-        free(vect->vector);
+        free_vector(vect);
         vect->size = 0;
         return EINVAL;
       }

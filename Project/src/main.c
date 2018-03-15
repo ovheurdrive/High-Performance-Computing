@@ -41,6 +41,8 @@ int main( int argc, char* argv[]) {
   snprintf(message, sizeof(message), "Vector from proc %d :", rank);
   display_vector(&vect, message);
 
+  free_matrix(&mtx);
+  free_vector(&vect);
 
   MPI_Finalize();
   return ret;
