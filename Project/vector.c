@@ -42,6 +42,9 @@ int read_vector_from_file(Vector* vect,char* filepath) {
     if( fscanf(file, "%d \n\n", &size) < 1 ) {
       return EINVAL;
     }
+    if( size < 0 ) {
+      return EINVAL;
+    }
     build_vector(size, vect);
     for( int i = 0; i < vect->size; i++ ) {
       if( fscanf(file, "%d \n", &vect->vector[i]) < 1 ) {

@@ -56,10 +56,13 @@ void randomize_matrix(Matrix* mtx, int max) {
 }
 
 int read_matrix_from_file(Matrix* mtx, char* filepath) {
-  int rows, col, num;
+  int rows, col;
   FILE* file = fopen(filepath, "r");
   if( file ) {
     if( fscanf(file, "%d %d \n\n", &rows, &col) < 2 ) {
+      return EINVAL;
+    }
+    if( rows < 0 || col < 0 ) {
       return EINVAL;
     }
     build_matrix(col, rows, mtx);
