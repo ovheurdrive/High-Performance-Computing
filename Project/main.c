@@ -34,7 +34,7 @@ int main( int argc, char* argv[]) {
   display_matrix(&mtx, "Matrix random : ");
   free_matrix(&mtx);
 
-  if( ret = read_matrix_from_file(&mtx, "test.txt") != 0) {
+  if( ret = read_matrix_from_file(&mtx, "matrix_test.txt") != 0) {
     MPI_Abort(MPI_COMM_WORLD, ret);
   }
 
@@ -52,6 +52,12 @@ int main( int argc, char* argv[]) {
 
   randomize_vector(&vect, 20);
   display_vector(&vect, "Vector random : ");
+  free_vector(&vect);
+
+  if( ret = read_vector_from_file(&vect, "vector_test.txt") != 0) {
+    MPI_Abort(MPI_COMM_WORLD, ret);
+  }
+  display_vector(&vect, "Vector from file : ");
   free_vector(&vect);
 
   MPI_Finalize();

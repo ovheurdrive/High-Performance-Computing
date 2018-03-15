@@ -34,3 +34,23 @@ void randomize_vector(Vector* vect, int max) {
     vect->vector[i] = (int)rand() % max;
   }
 }
+
+int read_vector_from_file(Vector* vect,char* filepath) {
+  int size;
+  FILE* file = fopen(filepath, "r");
+  if( file ) {
+    if( fscanf(file, "%d \n\n", &size) < 1 ) {
+      return EINVAL;
+    }
+    build_vector(size, vect);
+    for( int i = 0; i < vect->size; i++ ) {
+      if( fscanf(file, "%d \n", &vect->vector[i]) < 1 ) {
+        free(vect->vector);
+        vect->size = 0;
+        return EINVAL;
+      }
+    }
+    fclose(file);
+  }
+  return 0;
+}
