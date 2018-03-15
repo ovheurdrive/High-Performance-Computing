@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <mpi.h>
-#include "matrix.h"
-#include "vector.h"
+#include "../lib/matrix.h"
+#include "../lib/vector.h"
 
 int main( int argc, char* argv[]) {
   int ret = 0;
@@ -35,7 +35,7 @@ int main( int argc, char* argv[]) {
   display_matrix(&mtx, "Matrix random : ");
   free_matrix(&mtx);
 
-  if( (ret = read_matrix_from_file(&mtx, "matrix_test.txt")) != 0) {
+  if( (ret = read_matrix_from_file(&mtx, "data/matrix_test.txt")) != 0) {
     fprintf(stderr, "Error when constructing matrix from file in proc %d\n", rank);
     MPI_Abort(MPI_COMM_WORLD, ret);
   }
@@ -57,7 +57,7 @@ int main( int argc, char* argv[]) {
   display_vector(&vect, "Vector random : ");
   free_vector(&vect);
 
-  if( (ret = read_vector_from_file(&vect, "vector_test.txt")) != 0) {
+  if( (ret = read_vector_from_file(&vect, "data/vector_test.txt")) != 0) {
     fprintf(stderr, "Error when constructing vector from file in proc %d\n", rank);
     MPI_Abort(MPI_COMM_WORLD, ret);
   }

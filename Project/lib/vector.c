@@ -55,5 +55,8 @@ int read_vector_from_file(Vector* vect,char* filepath) {
     }
     fclose(file);
   }
+  else {
+    return ENOENT;
+  }
   return 0;
 }

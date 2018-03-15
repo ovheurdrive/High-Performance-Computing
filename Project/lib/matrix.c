@@ -76,5 +76,8 @@ int read_matrix_from_file(Matrix* mtx, char* filepath) {
     }
     fclose(file);
   }
+  else {
+    return ENOENT;
+  }
   return 0;
 }
