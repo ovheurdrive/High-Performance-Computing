@@ -28,7 +28,13 @@ int main( int argc, char* argv[]) {
     return ret;
   }
   randomize_matrix(&mtx,100);
-  display_matrix(&mtx);
+  display_matrix(&mtx, "Matrix random : ");
+  free_matrix(&mtx);
+  if( ret = read_matrix_from_file(&mtx, "test.txt") != 0) {
+    MPI_Abort(MPI_COMM_WORLD, ret);
+    return ret;
+  }
+  display_matrix(&mtx, "Matrix From File : ");
   free_matrix(&mtx);
 
   Vector vect = { 0, NULL };

@@ -23,7 +23,8 @@ int build_matrix( const unsigned int dimension_columns, const unsigned int dimen
   return 0;
 }
 
-void display_matrix(Matrix* mtx) {
+void display_matrix(Matrix* mtx, const char* message) {
+  printf("%s\n", message);
   for( int i = 0; i < mtx->rows; i++){
     printf("( ");
     for( int j = 0; j < mtx->col; j++) {
@@ -52,4 +53,27 @@ void randomize_matrix(Matrix* mtx, int max) {
       mtx->matrix[i][j] =  (int)rand() % max;
     }
   }
+}
+
+int read_matrix_from_file(Matrix* mtx, char* filepath) {
+  char c;
+  int rows, col, num;
+  FILE* file;
+  file = fopen(filepath, "r");
+  if( file ) {
+    if( !fscanf(file, "%d %d \n", &rows, &col) ) {
+      return EINVAL;
+    }
+    build_matrix(col, rows, mtx);
+    for( int i = 0; i < mtx->rows; i++ ) {
+      for( int j = 0; j < mtx->col; j++ ) {
+        if( fscanf( file, "%d ", &mtx->matrix[i][j]) == 0 ) {
+          free_matrix(mtx);
+          return EINVAL;
+        }
+      }
+    }
+    fclose(file);
+  }
+  return 0;
 }
