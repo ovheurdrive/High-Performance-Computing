@@ -1,5 +1,5 @@
 CC=mpicc
-CFLAGS=-Wall -g
+CFLAGS=-Wall -g -O3
 LDFLAGS=
 
 EXEC= main
