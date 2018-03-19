@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <mpi.h>
-#include "../lib/matrix.h"
-#include "../lib/vector.h"
+#include "lib/matrix.h"
+#include "lib/vector.h"
 
 int main( int argc, char* argv[]) {
   int ret = 0;

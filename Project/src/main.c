@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <mpi.h>
-#include "../lib/matrix.h"
-#include "../lib/vector.h"
+#include "lib/matrix.h"
+#include "lib/vector.h"
 #include "main.h"
 
 int main( int argc, char* argv[]) {
@@ -18,6 +17,8 @@ int main( int argc, char* argv[]) {
   Matrix mtx = { 0, 0, NULL };
   Vector vect = { 0, NULL };
 
+  // Fill matrices in the corresponding core
+
   char filename[100];
   snprintf(filename, sizeof(filename), "data/matrix_%d.txt", rank + 1 );
 
@@ -30,6 +31,7 @@ int main( int argc, char* argv[]) {
   snprintf(message, sizeof(message), "Matrix from proc %d :", rank);
   display_matrix(&mtx, message);
 
+  // Fill vectors in the corresponding core
 
   snprintf(filename, sizeof(filename), "data/vector_%d.txt", rank + 1 );
 
