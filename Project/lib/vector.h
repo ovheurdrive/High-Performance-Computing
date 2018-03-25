@@ -1,6 +1,6 @@
 typedef struct Vector{
   unsigned int size;
-  int* vector;
+  double* vector;
 }Vector;
 
 int build_vector( const unsigned int size, Vector* vect);

@@ -7,12 +7,12 @@
 int build_matrix( const unsigned int dimension_columns, const unsigned int dimension_rows, Matrix* mtx){
   mtx->col = dimension_columns;
   mtx->rows = dimension_rows;
-  mtx->matrix = malloc( mtx->rows * sizeof(int*));
+  mtx->matrix = malloc( mtx->rows * sizeof(double*));
   if(mtx->matrix == NULL){
     return ENOMEM;
   }
   for( int i = 0; i < mtx->rows; i++ ) {
-    mtx->matrix[i] = calloc(mtx->col, sizeof(int));
+    mtx->matrix[i] = calloc(mtx->col, sizeof(double));
     if(mtx->matrix[i] == NULL){
       mtx->rows = i;
       free_matrix(mtx);
@@ -28,7 +28,7 @@ void display_matrix(Matrix* mtx, const char* message) {
   for( int i = 0; i < mtx->rows; i++){
     printf("( ");
     for( int j = 0; j < mtx->col; j++) {
-      printf("%d ", mtx->matrix[i][j]);
+      printf("%lf ", mtx->matrix[i][j]);
     }
     printf(")\n");
   }
@@ -50,13 +50,13 @@ void randomize_matrix(Matrix* mtx, int max) {
   srand((unsigned) time(&t));
   for( int i = 0; i < mtx->rows; i++ ) {
     for( int j = 0; j < mtx->col; j++ ) {
-      mtx->matrix[i][j] =  (int)rand() % max;
+      mtx->matrix[i][j] =  (double)(rand() % max);
     }
   }
 }
 
 int read_matrix_from_file(Matrix* mtx, char* filepath) {
-  int rows, col;
+  int rows, col, ret = 0;
   FILE* file = fopen(filepath, "r");
   if( file ) {
     if( fscanf(file, "%d %d \n\n", &rows, &col) < 2 ) {
@@ -65,10 +65,12 @@ int read_matrix_from_file(Matrix* mtx, char* filepath) {
     if( rows < 0 || col < 0 ) {
       return EINVAL;
     }
-    build_matrix(col, rows, mtx);
+    if( (ret = build_matrix(col, rows, mtx)) != 0 ) {
+      return ret;
+    }
     for( int i = 0; i < mtx->rows; i++ ) {
       for( int j = 0; j < mtx->col; j++ ) {
-        if( fscanf(file, "%d ", &mtx->matrix[i][j]) < 1 ) {
+        if( fscanf(file, "%lf ", &mtx->matrix[i][j]) < 1 ) {
           free_matrix(mtx);
           return EINVAL;
         }
@@ -79,5 +81,5 @@ int read_matrix_from_file(Matrix* mtx, char* filepath) {
   else {
     return ENOENT;
   }
-  return 0;
+  return ret;
 }

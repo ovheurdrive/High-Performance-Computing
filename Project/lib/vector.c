@@ -6,7 +6,7 @@
 
 int build_vector( const unsigned int size, Vector* vect) {
   vect->size = size;
-  vect->vector = calloc(vect->size, sizeof(int));
+  vect->vector = calloc(vect->size, sizeof(double));
   if(vect->vector == NULL){
     return ENOMEM;
   }
@@ -16,7 +16,7 @@ int build_vector( const unsigned int size, Vector* vect) {
 void display_vector(Vector* vect, const char* message) {
   printf("%s ( ", message);
   for(int i = 0; i < vect->size; i++) {
-    printf("%d ", vect->vector[i]);
+    printf("%lf ", vect->vector[i]);
   }
   printf(")\n");
 }
@@ -31,12 +31,12 @@ void randomize_vector(Vector* vect, int max) {
   time_t t;
   srand((unsigned) time(&t));
   for( int i = 0; i < vect->size; i++ ) {
-    vect->vector[i] = (int)rand() % max;
+    vect->vector[i] = (double)(rand() % max);
   }
 }
 
 int read_vector_from_file(Vector* vect,char* filepath) {
-  int size;
+  int size, ret = 0;
   FILE* file = fopen(filepath, "r");
   if( file ) {
     if( fscanf(file, "%d \n\n", &size) < 1 ) {
@@ -45,9 +45,11 @@ int read_vector_from_file(Vector* vect,char* filepath) {
     if( size < 0 ) {
       return EINVAL;
     }
-    build_vector(size, vect);
+    if( (ret = build_vector(size, vect)) != 0) {
+      return ret;
+    }
     for( int i = 0; i < vect->size; i++ ) {
-      if( fscanf(file, "%d \n", &vect->vector[i]) < 1 ) {
+      if( fscanf(file, "%lf \n", &vect->vector[i]) < 1 ) {
         free_vector(vect);
         vect->size = 0;
         return EINVAL;
@@ -58,5 +60,5 @@ int read_vector_from_file(Vector* vect,char* filepath) {
   else {
     return ENOENT;
   }
-  return 0;
+  return ret;
 }
