@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
-#include "lib/matrix.h"
-#include "lib/vector.h"
+#include <errno.h>
+#include "../lib/matrix.h"
+#include "../lib/vector.h"
 #include "main.h"
 
 int main( int argc, char* argv[]) {
@@ -17,12 +18,7 @@ int main( int argc, char* argv[]) {
   Matrix mtx = { 0, 0, NULL };
   Vector vect = { 0, NULL };
 
-  // Fill matrices in the corresponding core
-
-  char filename[100];
-  snprintf(filename, sizeof(filename), "data/matrix_%d.txt", rank + 1 );
-
-  if( (ret = read_matrix_from_file(&mtx, filename)) != 0) {
+  if( (ret = read_matrix_from_file(&mtx, "data/matrix.txt")) != 0) {
     fprintf(stderr, "Error when constructing matrix from file in proc %d\n", rank);
     MPI_Abort(MPI_COMM_WORLD, ret);
   }
@@ -31,13 +27,15 @@ int main( int argc, char* argv[]) {
   snprintf(message, sizeof(message), "Matrix from proc %d :", rank);
   display_matrix(&mtx, message);
 
-  // Fill vectors in the corresponding core
-
-  snprintf(filename, sizeof(filename), "data/vector_%d.txt", rank + 1 );
-
-  if( (ret = read_vector_from_file(&vect, filename)) != 0) {
+  if( (ret = read_vector_from_file(&vect, "data/vector.txt")) != 0) {
     fprintf(stderr, "Error when constructing vector from file in proc %d\n", rank);
     MPI_Abort(MPI_COMM_WORLD, ret);
+  }
+
+  if( size > vect.size ) {
+    if( rank == root)
+      fprintf(stderr, "Error, too many processes regarding the vector size\n");
+    MPI_Abort(MPI_COMM_WORLD, EINVAL);
   }
 
   snprintf(message, sizeof(message), "Vector from proc %d :", rank);
