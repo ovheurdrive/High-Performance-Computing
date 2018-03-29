@@ -19,9 +19,18 @@ int main( int argc, char* argv[]) {
   Matrix mtx = { 0, 0, NULL };
   Vector vect = { 0, NULL };
 
+  // Read Metadata
+  FILE* metadata_file = fopen("data/metadata.txt", "r");
+  int rows, col;
+  if( fscanf(metadata_file, "%d %d", &rows, &col) < 2 ){
+    fclose(metadata_file);
+    MPI_Abort(MPI_COMM_WORLD, EINVAL);
+  }
+  fclose(metadata_file);
+
   // Initiate Matrix
 
-  if( (ret = read_matrix_from_file(&mtx, "data/matrix.txt")) != 0) {
+  if( (ret = read_matrix_from_file(&mtx, "data/matrix.txt", 0, rows, col)) != 0) {
     fprintf(stderr, "Error when constructing matrix from file in proc %d\n", rank);
     MPI_Abort(MPI_COMM_WORLD, ret);
   }
@@ -32,7 +41,7 @@ int main( int argc, char* argv[]) {
 
   // Initiate Vector
 
-  if( (ret = read_vector_from_file(&vect, "data/vector.txt")) != 0) {
+  if( (ret = read_vector_from_file(&vect, "data/vector.txt", 0, col)) != 0) {
     fprintf(stderr, "Error when constructing vector from file in proc %d\n", rank);
     MPI_Abort(MPI_COMM_WORLD, ret);
   }
@@ -47,15 +56,6 @@ int main( int argc, char* argv[]) {
 
   snprintf(message, sizeof(message), "Vector from proc %d :", rank);
   display_vector(&vect, message);
-
-  
-  /*
-  *  Scattering the vector and the matrices in the processors :
-  *  We can either use MPI_Scatter to distribute the Data,
-  *  Or we can split the matric and the vector beforhand in different files
-  *  that we load in the corresponding processors
-  */
-
 
 
   Vector result;

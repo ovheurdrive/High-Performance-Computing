@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+#include <string.h>
 #include "matrix.h"
 
 int build_matrix( const unsigned int dimension_columns, const unsigned int dimension_rows, Matrix* mtx){
@@ -55,17 +56,26 @@ void randomize_matrix(Matrix* mtx, int max) {
   }
 }
 
-int read_matrix_from_file(Matrix* mtx, char* filepath) {
-  int rows, col, ret = 0;
+int read_matrix_from_file(Matrix* mtx, char* filepath, const unsigned int first_row, const unsigned int num_rows, const unsigned int num_col) {
+  int ret = 0;
+  int current_row = 0;
+  char buffer[100];
   FILE* file = fopen(filepath, "r");
+
   if( file ) {
-    if( fscanf(file, "%d %d \n\n", &rows, &col) < 2 ) {
-      return EINVAL;
+    // skip rows until we reach first row
+    // rows are numeroted from the first line of the matrix as we skip
+    // the size before.
+    while( current_row < first_row ){
+      fgets(buffer, 100, file);
+      char* eol = strchr(buffer, '\n');
+      if( eol == NULL){
+        return EINVAL;
+      }
+      current_row++;
     }
-    if( rows < 0 || col < 0 ) {
-      return EINVAL;
-    }
-    if( (ret = build_matrix(col, rows, mtx)) != 0 ) {
+
+    if( (ret = build_matrix(num_col, num_rows, mtx)) != 0 ) {
       return ret;
     }
     for( int i = 0; i < mtx->rows; i++ ) {

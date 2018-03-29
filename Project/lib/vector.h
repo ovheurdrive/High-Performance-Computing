@@ -9,4 +9,4 @@ void free_vector(Vector* vect);
 
 void randomize_vector(Vector* vect, int max);
 
-int read_vector_from_file(Vector* vect, char* filepath);
+int read_vector_from_file(Vector* vect, char* filepath, const unsigned int first_row, const unsigned int size);

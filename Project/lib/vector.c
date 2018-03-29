@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+#include <string.h>
 #include "vector.h"
 
 int build_vector( const unsigned int size, Vector* vect) {
@@ -35,16 +36,24 @@ void randomize_vector(Vector* vect, int max) {
   }
 }
 
-int read_vector_from_file(Vector* vect,char* filepath) {
-  int size, ret = 0;
+int read_vector_from_file(Vector* vect, char* filepath, const unsigned int first_row, const unsigned int size) {
+  int ret = 0;
+  int current_row = 0;
+  char buffer[100];
   FILE* file = fopen(filepath, "r");
+  
   if( file ) {
-    if( fscanf(file, "%d \n\n", &size) < 1 ) {
-      return EINVAL;
+    // skip rows until we reach first row
+    // rows are numeroted from the first line of the matrix as we skip
+    // the size before.
+    while( current_row < first_row ){
+      fgets(buffer, 100, file);
+      if( strchr(buffer, '\n') == NULL){
+        return EINVAL;
+      }
+      current_row++;
     }
-    if( size < 0 ) {
-      return EINVAL;
-    }
+
     if( (ret = build_vector(size, vect)) != 0) {
       return ret;
     }

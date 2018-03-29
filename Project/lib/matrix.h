@@ -10,4 +10,4 @@ void free_matrix(Matrix* mtx);
 
 void randomize_matrix(Matrix* mtx,int max);
 
-int read_matrix_from_file(Matrix* mtx, char* filepath);
+int read_matrix_from_file(Matrix* mtx, char* filepath, const unsigned int first_row, const unsigned int num_rows, const unsigned int num_col);
