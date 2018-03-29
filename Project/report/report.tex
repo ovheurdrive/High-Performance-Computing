@@ -1,43 +1,20 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Programming/Coding Assignment
-% LaTeX Template
-%
-% This template has been downloaded from:
-% http://www.latextemplates.com
-%
-% Original author:
-% Ted Pavlic (http://www.tedpavlic.com)
-%
-% Note:
-% The \lipsum[#] commands throughout this template generate dummy text
-% to fill the template out. These commands should all be removed when
-% writing assignment content.
-%
-% This template uses a Perl script as an example snippet of code, most other
-% languages are also usable. Configure them in the "CODE INCLUSION
-% CONFIGURATION" section.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[11pt, a4paper]{article}
 
-%----------------------------------------------------------------------------------------
-% PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
-%----------------------------------------------------------------------------------------
-
-\documentclass{article}
-
+\usepackage[frenchb]{babel}
 \usepackage{fancyhdr} % Required for custom headers
 \usepackage{lastpage} % Required to determine the last page for the footer
 \usepackage{extramarks} % Required for headers and footers
 \usepackage[usenames,dvipsnames]{color} % Required for custom colors
 \usepackage{graphicx} % Required to insert images
 \usepackage{listings} % Required for insertion of code
-\usepackage{pxfonts} % Required for the courier font
-\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{stmaryrd}
 \usepackage{algpseudocode}
 \usepackage[frenchb]{babel}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{times}
 % Margins
 \topmargin=-0.45in
 \evensidemargin=0in
@@ -62,10 +39,9 @@
 \setlength\parindent{0pt} % Removes all indentation from paragraphs
 
 %----------------------------------------------------------------------------------------
-% CODE INCLUSION CONFIGURATION
+%       CODE INCLUSION CONFIGURATION
 %----------------------------------------------------------------------------------------
 
-\definecolor{MyDarkGreen}{rgb}{0.0,0.4,0.0} % This is the color used for comments
 \lstloadlanguages{C} % Load Perl syntax for listings, for a list of other languages supported see: ftp://ftp.tex.ac.uk/tex-archive/macros/latex/contrib/listings/listings.pdf
 \lstset{texcl=true, columns=flexible,basicstyle=\small\ttfamily}
 
@@ -108,7 +84,7 @@
 % NAME AND CLASS SECTION
 %----------------------------------------------------------------------------------------
 
-\newcommand{\hmwkTitle}{Project} % Assignment title
+\newcommand{\hmwkTitle}{Project : Jacobi Method in Parallel for Equation resolution} % Assignment title
 \newcommand{\hmwkClass}{High Performance Computing} % Course/class
 \newcommand{\hmwkClassInstructor}{F. Magoules} % Teacher/lecturer
 \newcommand{\hmwkAuthorName}{Plessia Stanislas} % Your name
@@ -142,5 +118,181 @@
 \newpage
 \tableofcontents
 \newpage
+
+\section{Introduction}
+
+\section{Methode de Jacobi}
+
+\subsection{Problème}
+
+Soit $n \in \mathbb{N}$ , $A = (a_{i,j})_{i,j \in \llbracket 1,n \rrbracket^2}$ matrice carrée de taille $n$, $b = (b_i)_{i \in \llbracket 1,n \rrbracket}$ vecteur de taille $n$.
+
+On cherche alors le vecteur $x = (x_i)_{i \in \llbracket 1,n \rrbracket}$ tel que :
+
+\begin{equation} 
+    \label{eq:probleme}
+    Ax = b
+\end{equation}
+
+\subsection{Méthode de résolution}
+
+Afin de résoudre ce problème, on va utiliser une méthode itérative appellée Méthode de Jacobi.\\
+
+Tout d'abord, on va séparer la matrice $A$ en deux sous matrices $D$ et $R$ de la manière suivante :\\
+
+\[
+A = 
+\begin{pmatrix}
+    a_{1,1} & a_{1,2} & \cdots & a_{1,n} \\
+    a_{2,1} & a_{2,2} & \cdots & a_{2,n} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    a_{n,1} & a_{n,2} & \cdots & a_{n,n} 
+\end{pmatrix}
+=
+\begin{pmatrix}
+    a_{1,1} & 0 & \cdots & 0 \\
+    0 & a_{2,2} & \cdots & 0 \\
+    \vdots  & \vdots  & \ddots & \vdots  \\
+    0 & 0 & \cdots & a_{n,n}
+\end{pmatrix}
++
+\begin{pmatrix}
+    0 & a_{1,2} & \cdots & a_{1,n} \\
+    a_{2,1} & 0 & \cdots & a_{2,n} \\
+    \vdots  & \vdots  & \ddots & \vdots  \\
+    a_{n,1} & a_{n,2} & \cdots & 0
+\end{pmatrix}
+\]\\
+
+Notons $D$ la matrice diagonale, et $R$ la matrice du reste.
+Comme la matrice $D$ est diagonale (qu'on suppose à coefficients nons nuls dans notre problème), $D$ est trivialement inversible d'inverse : \\
+
+\[
+D^{-1} =
+  \begin{pmatrix}
+  \frac{1}{a_{1,1}} & 0 & \cdots & 0 \\
+  0 & \frac{1}{a_{2,2}} & \cdots & 0 \\
+  \vdots  & \vdots  & \ddots & \vdots  \\
+  0 & 0 & \cdots & \frac{1}{a_{n,n}}
+ \end{pmatrix}
+\]
+
+On peut donc réécrire la formule \eqref{eq:probleme} de la manière qui suit :
+
+\begin{align}
+& (D + R)x = b\\
+\Leftrightarrow \qquad & Dx = b - Rx \\
+\Leftrightarrow \qquad & x = D^{-1}(b - Rx)
+\end{align}
+
+La Méthode de Jacobi est alors unt méthode itérative qui va chercher à trouver un point fixe à cet équation. On peut alors définir la suite $x^{(k)}, k \in \mathbb{N}$ telle que :
+
+\[
+    \left\{
+    \begin{array}{l}
+        x^{(0)} = \vec{0}\\
+        x^{(k+1)} = D^{-1}( b - Rx^{(k)})
+    \end{array}
+    \right.
+\]
+
+L'avantage flagrant de cette méthode de calcul, est que les éléments n'ont aucune dépendance verticale. Elle est donc très simple à parallèliser. 
+
+En effet,en écrivant la formule de recurance pour un élement du vecteur $x^{(k+1)}$, on obtient :
+
+\begin{align}
+    \forall k \in \mathbb{N}, \forall i \in \llbracket 1,n \rrbracket, 
+    \qquad x_{i}^{k+1} = \dfrac{1}{a_{i,i}}(b_i - \sum_{i \neq j}a_{i,j} \times x^{(k)}_j)
+\end{align}
+
+La seul contrainte devient alors que chaque processeur doit conna\^itre toutes les composantes de $x^{(k)}$ afin de pouvoir itérer, et il faut donc les communiquer, ce que nous feront en utilisant la bibliothèque MPI.
+
+\subsection{Preuve et Convergence}
+
+D'après le théorème de la méthode du point fixe, on sait que la suite $x_{n+1} = f(x_n)$ converge si la fonction $f$ est contractante aka $k$-lipshitzienne avec $k < 1$
+
+La matrice $D^{-1}R$ étant une application linéaire, trouvons une condition nécessaire et suffisante pour qu'elle soit contractante \\
+
+Soit $a,b$ deux vecteurs dans $\mathbb{R}^n$, $k \in [0,1[$ et notons $C = D^{-1}R$ , 
+
+\begin{align}
+    &|Ca - Cb| \leq k|a-b|\\
+    \Leftrightarrow \qquad & ||C - kI|| \leq 0
+\end{align}
+
+Cela revient à dire que le rayon spectral de la matrice $C$ noté $\rho(C)$ doit \^etre strictement inférieur à 1
+
+On peut donc affirmer que :
+
+\[
+\lim_{k \to \infty}x^{(k)} = x \Leftrightarrow \rho(C) = \rho(D^{-1}R) < 1
+\]
+
+\newpage 
+
+Cherchons une condition simple suffisante pour affirmer que le rayon spectral de la matrice $C$ soit inférieur à 1.\\
+
+Soit $\lambda$ valeur propre de $C$ ie $\forall y \in \mathbb{R}^n, Cy = \lambda y$
+
+On a alors, $\forall (i,j) \in \llbracket 1,n \rrbracket^2$
+
+\begin{align}
+    &||\lambda y||_{\infty} = |\sum_{j=1}^{n}c_{i,j}y_j\\
+    \Leftrightarrow \qquad & \lambda||y||_{\infty} = |\sum_{j \neq i}\dfrac{a_{i,j}}{a_{i,i}}y_j|\\
+    \Leftrightarrow \qquad & \lambda||y||_{\infty} = |\dfrac{1}{a_{i,i}}| \times |\sum_{j \neq i}a_{i,j}y_j|\\
+    \Leftrightarrow \qquad & \lambda||y||_{\infty} \leq |\dfrac{1}{a_{i,i}}| \times \sum_{j \neq i}|a_{i,j}y_j|\\
+    \Leftrightarrow \qquad & \lambda||y||_{\infty} \leq |\dfrac{1}{a_{i,i}}| \times \sum_{j \neq i}|a_{i,j}| \times ||y||_{\infty}\\
+    \Leftrightarrow \qquad & \lambda \leq |\dfrac{1}{a_{i,i}}| \times \sum_{j \neq i}|a_{i,j}|
+\end{align}
+
+Une condition suffisante pour que $\lambda < 1$ serait alors :
+
+\[
+\forall (i,j) \in \llbracket 1,n \rrbracket^2 \quad |a_{i,i}| > \sum_{i \neq j}|a_{i,j}|
+\]
+ie $A$ est à diagonale strictement dominante
+
+\subsection{Vecteur erreur et résidu}
+
+Afin de mesurer la convergence de la méthode de Jacobi (etd'avoir une condition d'arr\^et), on défini le vecteur erreur suivant :
+
+\[
+e^{(k+1)} = x^{(k+2)} - x^{(k+1)} = C(x^{(k+1)} - x^{(k)}) = Ce^{(k)}
+\]
+
+On a donc $e^{(k)} = C^ke^{(0)}$
+
+$e$ est l'erreur relative de la méthode, mais comme on a pas connaissance du véritable vecteur $x$, on l'utilise comme référence pour le test d'arr\^et.
+
+Le test d'arr\^et le plus courant de la méthode Jacobi est sur l'erreur relative du vecteur résidu :
+
+\[
+\epsilon > \dfrac{||r^{(k)}||}{||b||} = \dfrac{||De^{(k)}||}{||b||}
+\]
+
+\newpage
+
+\section{Implémentation}
+
+\subsection{Architecture}
+
+Le projet est divisé en plusieurs sous-dossiers
+\begin{itemize}
+    \item \textbf{/lib} qui contient des librairies pour manipuler les matrices, les vecteurs ainsi que les opérations basiques de manipulation de ces deux structures de données.
+    \item \textbf{/src} qui contient le fichier \textit{main} qui fait tourner le programme de l'agorithme de Jacobi.
+    \item \textbf{/data} qui contient les fichiers des matrices et des vecteurs ainsi que les métadonnées contenant la taille des matrices considérées.
+    \item \textbf{/bin} qui contientles binaires \textit{main} et \textit{test} afin de faire tourner le programme ou de tester les librairies
+    \item \textbf{/test} qui contient le code source du binaire de test dont l'objectif est de tester les fonctions des lirbairies.
+\end{itemize}
+Le projet est de plus constitué d'un Makefile qui contient les procédures suivantes :
+\begin{itemize}
+    \item \textit{make all} (ou simplement \textit{make}) pour compiler les librairies, main et les tests 
+    \item \textit{make test} pour compiler les tests 
+    \item \textit{make clean} pour supprimer les fichiers objets
+\end{itemize}
+
+\subsection{Structures de données}
+
+
 
 \end{document}

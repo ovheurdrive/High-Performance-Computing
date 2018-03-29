@@ -1,1 +1,9 @@
 \select@language {french}
+\contentsline {section}{\numberline {1}Introduction}{3}
+\contentsline {section}{\numberline {2}Methode de Jacobi}{3}
+\contentsline {subsection}{\numberline {2.1}Probl\IeC {\`e}me}{3}
+\contentsline {subsection}{\numberline {2.2}M\IeC {\'e}thode de r\IeC {\'e}solution}{3}
+\contentsline {subsection}{\numberline {2.3}Preuve et Convergence}{4}
+\contentsline {subsection}{\numberline {2.4}Vecteur erreur et r\IeC {\'e}sidu}{5}
+\contentsline {section}{\numberline {3}Impl\IeC {\'e}mentation}{6}
+\contentsline {subsection}{\numberline {3.1}Architecture}{6}

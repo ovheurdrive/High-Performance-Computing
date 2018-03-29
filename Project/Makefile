@@ -23,9 +23,9 @@ test: test/test.o $(LIBS_OBJ)
 %.o: %.c
 	$(CC) -o $@ -c $< $(CFLAGS)
 
-.PHONY: clean
-
 clean:
 	rm -rf lib/*.o
 	rm -rf src/*.o
 	rm -rf tests/*.o
+
+.PHONY: clean
