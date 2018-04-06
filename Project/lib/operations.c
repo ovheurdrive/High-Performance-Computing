@@ -7,8 +7,8 @@
 
 int product_vector_matrix(Vector* dest, Vector* vect, Matrix* mtx) {
   int ret = 0;
-  if( (ret = build_vector(vect->size, dest)) != 0 ) {
-    return ret;
+  if( (vect->size != mtx->col) || (dest->size != mtx->rows) ) {
+    return -1;
   }
   for( int i = 0; i < mtx->rows; i++ ) {
     for( int j = 0; j < mtx->col; j++ ) {
