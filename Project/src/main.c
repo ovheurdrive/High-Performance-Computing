@@ -49,12 +49,12 @@ int main( int argc, char* argv[]) {
   
   local_rows = rows / size;
   first_row = rank * local_rows;
-  if( rank < local_rows % size ) {
+  if( rank < rows % size ) {
     local_rows++;
     first_row += rank;
   }
   else {
-    first_row += local_rows % size;
+    first_row += rows % size;
   }
 
   // Initiate Matrix
@@ -81,8 +81,8 @@ int main( int argc, char* argv[]) {
   // We create a boolean array to check if a row needs to continue iterating and a global run boolean
   
   bool run = true;
-  continue_iterate = malloc(rows*sizeof(bool));
-  for(int i = 0; i < rows; i++ ) {
+  continue_iterate = malloc(local_rows*sizeof(bool));
+  for(int i = 0; i < local_rows; i++ ) {
     continue_iterate[i] = true;
   }
 
@@ -116,7 +116,7 @@ int main( int argc, char* argv[]) {
 
         for( int p = 0; p < size; p++) {
           if( p != rank ) {
-            MPI_Isend(&global_result.vector[i], 1, MPI_DOUBLE, p, i, MPI_COMM_WORLD, &request);
+            MPI_Isend(&global_result.vector[i], 1, MPI_DOUBLE, p, 0, MPI_COMM_WORLD, &request);
           }
         }
       }
@@ -125,7 +125,7 @@ int main( int argc, char* argv[]) {
         // We receive the values from the other processors
 
         int processor = i * size / col;
-        MPI_Irecv(&global_result.vector[i], 1, MPI_DOUBLE, processor, i, MPI_COMM_WORLD, &request);
+        MPI_Irecv(&global_result.vector[i], 1, MPI_DOUBLE, processor, 0, MPI_COMM_WORLD, &request);
         MPI_Wait(&request, &status); 
       }
     }
@@ -137,11 +137,11 @@ int main( int argc, char* argv[]) {
 
       // We check if the row needs to be iterated
 
-      if(!continue_iterate[i]) continue;
+      if(continue_iterate[i] == false) continue;
 
       // Jacobi recurrence formula
 
-      int local_vect_matrix_sum = 0;
+      double local_vect_matrix_sum = 0;
       for( int j = 0; j < col; j++ ) {
         if( i + first_row != j) local_vect_matrix_sum += mtx.matrix[i][j] * global_result.vector[j];
       }
@@ -149,10 +149,8 @@ int main( int argc, char* argv[]) {
       local_result.vector[i] = ( 1 / mtx.matrix[i][i + first_row]) * ( vect.vector[i] - local_vect_matrix_sum);
 
       // Residual analysis
-      display_vector(&local_result, "Local result");
-      display_vector(&global_result, "global result");
 
-      int error = fabs(local_result.vector[i] - global_result.vector[first_row + i]);
+      double error = fabs(local_result.vector[i] - global_result.vector[first_row + i]);
 
       if( error < 1e-6 ){
         continue_iterate[i] = false;
