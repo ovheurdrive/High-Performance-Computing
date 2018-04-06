@@ -1,12 +1,20 @@
+// Standard Libraries
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <unistd.h>
+
+// Utilities 
+
 #include <math.h>
 #include <mpi.h>
 #include <errno.h>
-#include <stdbool.h>
+
+// Libs
+
 #include "../lib/matrix.h"
 #include "../lib/vector.h"
-#include "../lib/operations.h"
 #include "main.h"
 
 int main( int argc, char* argv[]) {
@@ -21,11 +29,29 @@ int main( int argc, char* argv[]) {
   MPI_Request request;
   MPI_Status status;
 
+  // Parsin Arguments
+
+  bool verbose = false;
+  int arg;
+  while ( (arg = getopt(argc, argv, "vh?")) != -1 )
+    switch ( arg )
+    {
+      case 'v':
+        verbose = true;
+        break;
+      case 'h':
+      case '?':
+        usage(argv[0]);
+        break;
+    }
+
+  // Init Variables
+
   int root = size - 1;
   int iterations = 0;
   Matrix mtx = { 0, 0, NULL };
   Vector vect = { 0, NULL };
-  bool* continue_iterate;
+  bool* continue_iterate = NULL;
 
   // Read Metadata
   
@@ -64,9 +90,11 @@ int main( int argc, char* argv[]) {
     goto fail;
   }
 
-  char message[100];
-  snprintf(message, sizeof(message), "Matrix from proc %d :", rank);
-  display_matrix(&mtx, message);
+  if( verbose ) {
+    char message[100];
+    snprintf(message, sizeof(message), "Matrix from proc %d :", rank);
+    display_matrix(&mtx, message);
+  }
 
   // Initiate Vector
 
@@ -75,8 +103,11 @@ int main( int argc, char* argv[]) {
     goto fail;
   }
 
-  snprintf(message, sizeof(message), "Vector from proc %d :", rank);
-  display_vector(&vect, message);
+  if( verbose ) {
+    char message[100];
+    snprintf(message, sizeof(message), "Vector from proc %d :", rank);
+    display_vector(&vect, message);
+  }
 
   // We create a boolean array to check if a row needs to continue iterating and a global run boolean
   
@@ -152,13 +183,17 @@ int main( int argc, char* argv[]) {
 
       double error = fabs(local_result.vector[i] - global_result.vector[first_row + i]);
 
+      if( verbose ) {
+        printf("Residue on processor %d row %d : %lf\n", rank, i+first_row, error);
+      }
+
       if( error < 1e-6 ){
         continue_iterate[i] = false;
       }
-
     }
 
     // Test if the processor still have some rows to iterate
+
     int local_continue_to_process = false;
     int iterator = 0;
     while( iterator < local_rows && local_continue_to_process == false ) {
@@ -196,8 +231,19 @@ int main( int argc, char* argv[]) {
   {
     printf("Converged in %d iterations\nSolution found:\n", iterations);
     display_vector(&global_result, "Result : ");
+
+    if( verbose ) {
+      Vector test_rest = { 0, NULL };
+      Matrix global_matrix = { 0, 0, NULL };
+      read_matrix_from_file(&global_matrix, "data/matrix.txt", 0, rows, col);
+      build_vector(col, &test_rest);
+      product_vector_matrix(&test_rest, &global_result, &global_matrix);
+      display_vector(&test_rest, "Injection of solution into equation : ");
+      free_vector(&test_rest);
+      free_matrix(&global_matrix);
+    }
   }
-  
+
   free(continue_iterate);
   free_vector(&local_result);
   free_vector(&global_result);
@@ -215,4 +261,23 @@ fail:
   free_matrix(&mtx);
   free_vector(&vect);
   MPI_Abort(MPI_COMM_WORLD, ret);
+}
+
+int product_vector_matrix(Vector* dest, Vector* vect, Matrix* mtx) {
+  int ret = 0;
+  if( (vect->size != mtx->col) || (dest->size != mtx->rows) ) {
+    return -1;
+  }
+  for( int i = 0; i < mtx->rows; i++ ) {
+    for( int j = 0; j < mtx->col; j++ ) {
+      dest->vector[i] += mtx->matrix[i][j] * vect->vector[j];
+    }
+  }
+  return ret;
+}
+
+static void usage ( const char *prog )
+{
+  fprintf(stderr, "Usage: mpirun -n n_proc %s [-h] [-v]\n\n", prog);
+  MPI_Abort(MPI_COMM_WORLD, 1);
 }
