@@ -56,12 +56,17 @@ int main( int argc, char* argv[]) {
   // Read Metadata
   
   FILE* metadata_file = fopen("data/metadata.txt", "r");
-  int rows, col, local_rows, first_row;
-  if( fscanf(metadata_file, "%d %d", &rows, &col) < 2 ){
+  int rows, col, local_rows, first_row, r;
+  if( metadata_file ) {
+    if( fscanf(metadata_file, "%d %d", &rows, &col) < 2 ){
+      fclose(metadata_file);
+      MPI_Abort(MPI_COMM_WORLD, EINVAL);
+    }
     fclose(metadata_file);
-    MPI_Abort(MPI_COMM_WORLD, EINVAL);
   }
-  fclose(metadata_file);
+  else {
+    MPI_Abort(MPI_COMM_WORLD, ENOENT);
+  }
 
   // Check if the number of process is inferior to the size of the data
 
@@ -74,14 +79,15 @@ int main( int argc, char* argv[]) {
   // Split vector and matrix according to number of process
   
   local_rows = rows / size;
+  r = rows % size;
   first_row = rank * local_rows;
-  if( rank < rows % size ) {
+  if( rank < r ) {
     local_rows++;
     first_row += rank;
   }
   else {
-    first_row += rows % size;
-  }
+    first_row += r;
+  }  
 
   // Initiate Matrix
 
@@ -132,6 +138,7 @@ int main( int argc, char* argv[]) {
   
   while( run && (iterations < 50000)) {
 
+
     // First we need to fill the global vector with the result from the other proc
     for( int i = 0; i < col; i++ ) {
 
@@ -156,11 +163,11 @@ int main( int argc, char* argv[]) {
         // We receive the values from the other processors
 
         int processor = i * size / col;
+
         MPI_Irecv(&global_result.vector[i], 1, MPI_DOUBLE, processor, 0, MPI_COMM_WORLD, &request);
         MPI_Wait(&request, &status); 
       }
     }
-
 
     // Calculate next iteration of the local result
 

@@ -15,6 +15,8 @@
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{times}
+\usepackage{framed}
+
 % Margins
 \topmargin=-0.45in
 \evensidemargin=0in
@@ -198,7 +200,7 @@ La Méthode de Jacobi est alors unt méthode itérative qui va chercher à trouv
 
 L'avantage flagrant de cette méthode de calcul, est que les éléments n'ont aucune dépendance verticale. Elle est donc très simple à parallèliser. 
 
-En effet,en écrivant la formule de recurance pour un élement du vecteur $x^{(k+1)}$, on obtient :
+En effet,en écrivant la formule de récurrence pour un élement du vecteur $x^{(k+1)}$, on obtient :
 
 \begin{align}
     \forall k \in \mathbb{N}, \forall i \in \llbracket 1,n \rrbracket, 
@@ -303,7 +305,7 @@ On peut alors considérer que l'erreur relative est suffisament proche de l'erre
 
 Le projet est divisé en plusieurs sous-dossiers
 \begin{itemize}
-    \item \textbf{/lib} qui contient des librairies pour manipuler les matrices, les vecteurs ainsi que les opérations basiques de manipulation de ces deux structures de données.
+    \item \textbf{/lib} qui contient des librairies pour manipuler les matrices et les vecteurs ainsi que les opérations basiques de manipulation de ces deux structures de données.
     \item \textbf{/src} qui contient le fichier \textit{main} qui fait tourner le programme de l'agorithme de Jacobi.
     \item \textbf{/data} qui contient les fichiers des matrices et des vecteurs ainsi que les métadonnées contenant la taille des matrices considérées.
     \item \textbf{/bin} qui contientles binaires \textit{main} et \textit{test} afin de faire tourner le programme ou de tester les librairies
@@ -328,6 +330,113 @@ La structure Vecteur est très similaire mais n'a qu'une seule dimension.\\
 
 \subsection{Librairies}
 
-Ce projet est fourni avec 3 libraries situées dans les fichiers C du dossier \textbf{/lib}.
+Ce projet est fourni avec 2 librairies situées dans les fichiers C du dossier \textbf{/lib}.
 
+Les deux librairies ( Matrix et Vector ) sont analogues et possèdent des fonctions très similaires dont on remplacera le mot \textit{structure} par la structure qui correspond (matrix/vector):
+
+\begin{itemize}
+    \item \texttt{build\_structure} qui alloue dans la heap la structure avec la taille souhaitée
+    \item \texttt{display\_structure} qui affiche le contenu algébrique de la structure
+    \item \texttt{randomize\_structure} qui génère un contenu aléatoire (pas utilisée dans le projet en soit)
+    \item \texttt{free\_structure} qui désalloue la structure de la heap et la reset
+    \item \texttt{read\_structure\_from\_file} qui utilise un fichier pour remplir la structure
+\end{itemize}
+
+\newpage
+
+\subsection{Tests}
+
+Le fichier de test ne verifie que le bon fonctionnement des librairies en générant des matrices et vecteurs de manière aléatoire et en utilisant un fichier de test.
+
+\subsection{Données}
+
+Pour le problème, trois fichiers de données différents sont nécessaires :
+\begin{itemize}
+    \item Un fichier de metadonnées (metadata.txt) qui contient les dimensions du problème
+    \item Un fichier de matrice (matrix.txt) qui contient les données de la matrice $A$ séparées par des espaces
+    \item Un fichier de vecteur (vector.txt) qui contient le vecteur $b$ du problème
+\end{itemize}
+
+\subsection{Compilation et Lancement}
+
+Le Makefile n'estpas indispensable à la compilation du projet.
+Les librairies doivent \^etre compilées puis liées au main (cela peut se faire en utilisant seulement gcc car les librairies n'utilisent pas MPI, mais mpicc est recommandé pour raison de compatibilité).\\
+
+Le programme main est compilé en utilisant mpicc, le compilateur C de la librairie MPI. Les différents flags de compilations sont (viennent de gcc): 
+
+\begin{itemize}
+    \item \texttt{-Wall} qui active tout les messages de warning
+    \item \texttt{-g} qui active les flags de debug
+    \item \texttt{-O3} qui active toutes les optimisations de compilations
+\end{itemize}
+
+Pour lancer le programe : 
+
+\texttt{mpirun -n n\_proc bin/main [-v] [-h?]}
+
+\subsection{Programme principal}
+
+Le programme principal est composé de \texttt{main.c} et \texttt{main.h}.
+
+Celui ci à 3 fonctions :
+\begin{itemize}
+    \item \texttt{main} qui initialise le programme et résoud le système linéaire
+    \item \texttt{product\_vector\_matrix} qui effectue le produit final en mode verbose pour verifier le résultat
+    \item \texttt{usage} qui affiche l'usage de la Command Line Interface
+\end{itemize}
+
+Le programme peut recevoir les argument "-v" pour passer en mode verbose ou -h/-? pour afficher l'usage.
+
+Les fichiers de données sont hardcodés dans le code source, mais cette partie est facilement modifiable pour pouvoir spécifier le chemin du fichier en question.\\
+
+Ce programme effectue la méthode de Jacobi en asynchrone utilisant MPI\_Isend, MPI\_Irecv et MPI\_Wait.\\
+
+Le principe de communication est le suivant :\\
+
+Les processeurs disposent d'une variable \texttt{mtx} qui contient une sous-matrice et \texttt{vect} le sous-vecteur de $b$ associée à la sous matrice suivant un découpage par lignes distribué de manière équilibré sur ceux-ci.
+
+Par exemple, une matrice $3 \times 3$ sur $2$ processeurs serait découpées avec la distribution de lignes suivantes :
+
+\begin{align*}
+    &\begin{pmatrix}
+        a_{1,1} & a_{1,2} & a_{1,3}\\
+        a_{2,1} & a_{2,2} & a_{2,3}\\
+    \end{pmatrix} \\
+    &\begin{pmatrix}
+        a_{3,1} & a_{3,2} & a_{3,3}\\
+    \end{pmatrix}
+\end{align*}
+
+
+Ensuite, chaque processeur dispose d'une variable \texttt{global\_result} qui contient $x^{(k)}$ à l'étape $k$ et de \texttt{local\_result} qui après itération contiendra les sous vecteurs de $x^{(k+1)}$ àl'étape $k$.\\
+
+Il y'a également un tableau \texttt{continue\_iterate} qui pour chaque ligne de chaque processeur contient un booleén qui permet de décider si l'on continue d'itérer sur la ligne en question.
+
+Au début de chaque itération, les processeurs envoient la valeur locale de \texttt{global\_result} dans lequel on a stocké l'itération que l'on viens de terminer, et l'on complète cette variable en recevant la valeur locale des autres processeurs.\\
+
+Les appels à la fonction MPI\_Irecv sont suivi généralement d'un appel à MPI\_Wait qui va attendre que la reception soit effective car elle est nécéssaire à l'opération qui suit.\\
+
+En revanche nous ne mettons pas de MPI\_Wait après MPI\_Isend car les données ne sont mutés qu'après récéption de la données suivante, et la req\^eted'envoi sera donc terminée à ce moment.\\
+
+Ensuite on applique la formule de récurrence sur ces nouvelles données que l'on stock dans \texttt{local\_result}.\\
+
+Pour le test d'arr\^et, comme nous somme en norme infinie, on peut calculer l'erreur relative de chaque composante $e^{(k)}_{i} = x^{(k+1)}[i] - x^{(k)}[i]$)
+
+On va alors tester chaque ligne de chaque processeur et ne continuer l'itération de celles-ci que si la convergence est atteinte :
+
+\[
+e^{(k)}_{i} \leq 1.10^{-6}
+\]
+
+Pour cela, on modifie à l'interieur de chaque processeur la tableau de booléens \texttt{continue\_iterate}, puis une fois que le tableau ne contiens que des \texttt{false}, on envoi la valeur false au processeur root pour que celui ci fasse un masque binaire de tout les autres pour décider de stoper la boucle principale. La limite d'itérations fixée à 50000 est arbitraire et pourrait certainement \^etre abaissée.
+
+\subsection{Erreurs}
+
+L'architecture de code de ce programme suit les standard de développement basés sur le status d'une opération. En effet, dans ce programme beaucoup de fonctions sont succeptibles d'échouer (la manipulation de fichier, l'allocation mémoire, ...).
+
+Dans cette optique, les fonctions des librairies  utilisent des pointeurs sur les variables, qui sont alors mutées en place, et les fonctions renvoient un code stipulant la réussite ou l'échec de l'opération an utilisant les code d'erreurs standards de la librairie \texttt{errno.h}.
+
+\newpage
+
+\section{Résultats}
 \end{document}
