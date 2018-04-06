@@ -161,8 +161,15 @@ int main( int argc, char* argv[]) {
       else {
 
         // We receive the values from the other processors
-
-        int processor = i * size / col;
+        int remaining = col % size;
+        int processor;
+        if( i < remaining * ((col / size) + 1)) {
+          processor = i / ((col / size) + 1 );
+        }
+        else {
+          processor = i - remaining*(rows / size + 1 );
+          processor = remaining + processor/(rows/size);
+        }
 
         MPI_Irecv(&global_result.vector[i], 1, MPI_DOUBLE, processor, 0, MPI_COMM_WORLD, &request);
         MPI_Wait(&request, &status); 
