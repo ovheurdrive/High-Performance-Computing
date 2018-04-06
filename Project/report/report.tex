@@ -202,7 +202,7 @@ En effet,en écrivant la formule de recurance pour un élement du vecteur $x^{(k
 
 \begin{align}
     \forall k \in \mathbb{N}, \forall i \in \llbracket 1,n \rrbracket, 
-    \qquad x_{i}^{k+1} = \dfrac{1}{a_{i,i}}(b_i - \sum_{i \neq j}a_{i,j} \times x^{(k)}_j)
+    \qquad x_{i}^{(k+1)} = \dfrac{1}{a_{i,i}}(b_i - \sum_{i \neq j}a_{i,j} \times x^{(k)}_j)
 \end{align}
 
 La seul contrainte devient alors que chaque processeur doit conna\^itre toutes les composantes de $x^{(k)}$ afin de pouvoir itérer, et il faut donc les communiquer, ce que nous feront en utilisant la bibliothèque MPI.
@@ -252,23 +252,48 @@ Une condition suffisante pour que $\lambda < 1$ serait alors :
 \]
 ie $A$ est à diagonale strictement dominante
 
+\newpage 
+
 \subsection{Vecteur erreur et résidu}
 
-Afin de mesurer la convergence de la méthode de Jacobi (etd'avoir une condition d'arr\^et), on défini le vecteur erreur suivant :
+Afin de mesurer la convergence de la méthode de Jacobi (etd'avoir une condition d'arr\^et), on défini le vecteur erreur relative suivant :
 
 \[
-e^{(k+1)} = x^{(k+2)} - x^{(k+1)} = C(x^{(k+1)} - x^{(k)}) = Ce^{(k)}
+e^{(k+1)} = ||x^{(k+2)} - x^{(k+1)}||_{\infty} = ||-C(x^{(k+1)} - x^{(k)})||_{\infty} = ||-C||_{\infty}e^{(k)}
 \]
 
-On a donc $e^{(k)} = C^ke^{(0)}$
+On a donc $e^{(k)} = (-1)^k||C||_{\infty}^ke^{(0)}$
 
-$e$ est l'erreur relative de la méthode, mais comme on a pas connaissance du véritable vecteur $x$, on l'utilise comme référence pour le test d'arr\^et.
-
-Le test d'arr\^et le plus courant de la méthode Jacobi est sur l'erreur relative du vecteur résidu :
+On a de plus le vecteur erreur :
 
 \[
-\epsilon > \dfrac{||r^{(k)}||}{||b||} = \dfrac{||De^{(k)}||}{||b||}
+\epsilon^{(k)} = ||x - x^{(k)}||_{\infty}
 \]
+
+$e^{(k)}$ est l'erreur relative de la méthode à l'itération $k$, mais comme on a pas connaissance du véritable vecteur $x$, on l'utilise comme référence pour le test d'arr\^et.
+
+En effet, 
+
+\begin{align}
+    e^{(k)} &= ||x^{(k+1)} - x^{(k)}||_{\infty}\\
+    &= ||D^{-1}b - Cx^{(k)} - x^{(k)}||_{\infty}\\
+    &= ||x + Cx - Cx^{(k)} - x^{(k)}||_{\infty}\\
+    &= ||x - x^{(k)} + C(x - x^{(k)})||_{\infty}\\
+    &= ||(C + I)(x - x^{(k)})||_{\infty}
+\end{align}
+
+On obtient alors par inégalité triangulaire: 
+
+\[
+e^{(k)} = ||I + C||_{\infty}\epsilon^{(k)} \leq \epsilon^{(k)} + ||C||_{\infty}\epsilon^{(k)}
+\]
+
+Et comme on a vu précedemment que le rayon spectrale de $C$ est nécessairement inférieur à 1, et donc sa norme est également inférieure à 1 on a donc :
+\[
+e^{(k)} \leq 2\epsilon^{(k)}
+\]
+
+On peut alors considérer que l'erreur relative est suffisament proche de l'erreur réelle pour l'utiliser comme test d'arr\^et.
 
 \newpage
 
