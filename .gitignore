@@ -29,3 +29,5 @@
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+*.nav
+*.snm
