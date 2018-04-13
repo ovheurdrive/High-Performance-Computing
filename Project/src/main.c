@@ -136,7 +136,7 @@ int main( int argc, char* argv[]) {
 
   // Main Jacobi Loop
   
-  while( run && (iterations < 50000)) {
+  while( run && (iterations < 500)) {
 
 
     // First we need to fill the global vector with the result from the other proc
