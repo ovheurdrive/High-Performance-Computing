@@ -59,7 +59,7 @@ void randomize_matrix(Matrix* mtx, int max) {
 int read_matrix_from_file(Matrix* mtx, char* filepath, const unsigned int first_row, const unsigned int num_rows, const unsigned int num_col) {
   int ret = 0;
   int current_row = 0;
-  char buffer[100];
+  char buffer[10000];
   FILE* file = fopen(filepath, "r");
 
   if( file ) {
@@ -67,7 +67,7 @@ int read_matrix_from_file(Matrix* mtx, char* filepath, const unsigned int first_
     // rows are numeroted from the first line of the matrix as we skip
     // the size before.
     while( current_row < first_row ){
-      fgets(buffer, 100, file);
+      fgets(buffer, 10000, file);
       char* eol = strchr(buffer, '\n');
       if( eol == NULL){
         return EINVAL;

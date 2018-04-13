@@ -55,7 +55,7 @@ int main( int argc, char* argv[]) {
 
   // Read Metadata
   
-  FILE* metadata_file = fopen("data/metadata.txt", "r");
+  FILE* metadata_file = fopen("data/metadata_t.txt", "r");
   int rows, col, local_rows, first_row, r;
   if( metadata_file ) {
     if( fscanf(metadata_file, "%d %d", &rows, &col) < 2 ){
@@ -91,7 +91,7 @@ int main( int argc, char* argv[]) {
 
   // Initiate Matrix
 
-  if( (ret = read_matrix_from_file(&mtx, "data/matrix.txt", first_row, local_rows, col)) != 0) {
+  if( (ret = read_matrix_from_file(&mtx, "data/matrix_t.txt", first_row, local_rows, col)) != 0) {
     fprintf(stderr, "Error when constructing matrix from file in proc %d\n", rank);
     goto fail;
   }
@@ -104,7 +104,7 @@ int main( int argc, char* argv[]) {
 
   // Initiate Vector
 
-  if( (ret = read_vector_from_file(&vect, "data/vector.txt", first_row, local_rows)) != 0) {
+  if( (ret = read_vector_from_file(&vect, "data/vector_t.txt", first_row, local_rows)) != 0) {
     fprintf(stderr, "Error when constructing vector from file in proc %d\n", rank);
     goto fail;
   }
