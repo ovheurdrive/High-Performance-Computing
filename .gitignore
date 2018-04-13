@@ -2,6 +2,8 @@
 **/bin
 **/*.o
 
+**/data/*_t.txt
+
 # Latex
 
 *.aux
