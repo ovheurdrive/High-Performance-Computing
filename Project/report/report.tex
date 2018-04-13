@@ -11,10 +11,8 @@
 \usepackage[T1]{fontenc}
 \usepackage{stmaryrd}
 \usepackage{algpseudocode}
-\usepackage[frenchb]{babel}
 \usepackage{amsfonts}
 \usepackage{amsmath}
-\usepackage{times}
 \usepackage{framed}
 
 % Margins
@@ -44,15 +42,14 @@
 %       CODE INCLUSION CONFIGURATION
 %----------------------------------------------------------------------------------------
 
-\lstloadlanguages{C} % Load Perl syntax for listings, for a list of other languages supported see: ftp://ftp.tex.ac.uk/tex-archive/macros/latex/contrib/listings/listings.pdf
-\lstset{texcl=true, columns=flexible,basicstyle=\small\ttfamily}
+\lstloadlanguages{C}
 
-\lstdefinestyle{ccode}{language=C, % Use Perl in this example
+\lstset{language=C, % Use Perl in this example
         frame=single, % Single frame around code
         basicstyle=\small\ttfamily, % Use small true type font
-        keywordstyle=[1]\color{Blue}, % Perl functions bold and blue
+        keywordstyle=[1]\color{Blue}\bf, % Perl functions bold and blue
         keywordstyle=[2]\color{Green}, % Perl function arguments purple
-        keywordstyle=[3]\color{Blue}, % Custom functions underlined and blue
+        keywordstyle=[3]\color{Blue}\underbar, % Custom functions underlined and blue
         identifierstyle=, % Nothing special about identifiers
         commentstyle=\small\color{Brown}, % Comments small dark green courier font
         stringstyle=\color{OliveGreen}, % Strings are purple
@@ -70,17 +67,6 @@
         columns=flexible
 }
 
-% Creates a new command to include a perl script, the first parameter is the filename of the script (without .pl), the second parameter is the caption
-\newcommand{\cscript}[2]{
-\begin{itemize}
-\item[]\lstinputlisting[caption=#2,label=#1]{#1.pl}
-\end{itemize}
-}
-
-
-\newcommand{\problemAnswer}[1]{ % Defines the problem answer command with the content as the only argument
-\noindent\framebox[\columnwidth][c]{\begin{minipage}{0.98\columnwidth}#1\end{minipage}} % Makes the box around the problem answer and puts the content inside
-}
 
 %----------------------------------------------------------------------------------------
 % NAME AND CLASS SECTION
@@ -122,6 +108,31 @@
 \newpage
 
 \section{Introduction}
+
+Dans cet article, nous allons nous attaquer à la résolution de systèmes linéaires. 
+
+Ces systèmes sont de la forme suivante :
+
+\[
+    \left\{
+    \begin{array}{l}
+        ax + by + cz = s_1\\
+        dx + ey + fz = s_2\\
+        gx + hy + iz = s_3
+    \end{array}
+    \right.
+\]
+
+On les rencontre par exemple lors de modélisation par éléments finis de la solution d'un équation différentielle, ou lors de problème d'optimisation linéaire ou de marches aléatoires.
+
+Un exemple concret serait celui des cha\^ines de Markov pour représenter un mouvement aléatoire où la question serait de trouver une solution stationnaire.
+Dans un problème tel que celui du voyageur de commerce en utilisant la méthode du recuit simulé, le problème peut se modéliser par un telle cha\^ine :
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=150pt]{travelling_salesman.png}
+    \caption{Modélisation du problème du voyageur de commerce}
+\end{figure}
 
 \section{Methode de Jacobi}
 
@@ -236,8 +247,6 @@ On peut donc affirmer que :
 \lim_{k \to \infty}x^{(k)} = x \Leftrightarrow \rho(C) = \rho(-D^{-1}R) < 1
 \]
 
-\newpage 
-
 Cherchons une condition simple suffisante pour affirmer que le rayon spectral de la matrice $C$ soit inférieur à 1.\\
 
 Soit $\lambda$ valeur propre de $C$ ie $\forall y \in \mathbb{R}^n, Cy = \lambda y$
@@ -282,13 +291,13 @@ $e^{(k)}$ est l'erreur relative de la méthode à l'itération $k$, mais comme o
 
 En effet, 
 
-\begin{align}
+\begin{align*}
     e^{(k)} &= ||x^{(k+1)} - x^{(k)}||_{\infty}\\
     &= ||Cx^{(k)} + d - x^{(k)}||_{\infty}\\
     &= ||Cx^{(k)} + x - Cx - x^{(k)}||_{\infty}\\
     &= ||x - x^{(k)} - C(x - x^{(k)})||_{\infty}\\
     &= ||(-C + I)(x - x^{(k)})||_{\infty}
-\end{align}
+\end{align*}
 
 On obtient alors par inégalité triangulaire: 
 
@@ -332,7 +341,22 @@ Ces structures sont contenues dans les fichiers \texttt{lib/matrix.h} et \texttt
 
 La structure Matrice est composé de deux entiers non signés pour les dimensions et d'un tableau de \textit{double} à 2 dimensions pour contenir les valeurs de la matrice.\\
 
-La structure Vecteur est très similaire mais n'a qu'une seule dimension.\\
+\begin{lstlisting}
+typedef struct Matrix{
+    unsigned int col;
+    unsigned int rows;
+    double **matrix; 
+}Matrix;
+\end{lstlisting}
+
+La structure Vecteur est très similaire mais n'a qu'une seule dimension:\\
+
+\begin{lstlisting}
+typedef struct Vector{
+    unsigned int size;
+    double **vector; 
+}Vector;
+\end{lstlisting}
 
 \subsection{Librairies}
 
@@ -345,10 +369,32 @@ Les deux librairies ( Matrix et Vector ) sont analogues et possèdent des foncti
     \item \texttt{display\_structure} qui affiche le contenu algébrique de la structure
     \item \texttt{randomize\_structure} qui génère un contenu aléatoire (pas utilisée dans le projet en soit)
     \item \texttt{free\_structure} qui désalloue la structure de la heap et la reset
-    \item \texttt{read\_structure\_from\_file} qui utilise un fichier pour remplir la structure
+    \item \texttt{read\_structure\_from\_file} qui utilise un fichier pour remplir la structure\\
 \end{itemize}
 
-\newpage
+La fonction \texttt{read\_structure\_from\_file} est la seule fonction non triviale (plusieurs sous structures de fonctionnements internes). Elle peut échouer ($cf.$ partie \ref{err} page \pageref{err})
+
+\begin{framed}
+    \begin{algorithmic}
+        \Function{read\_structure\_from\_file}{structure, filename, first\_line, size}
+            \State Buffer of size 10000
+            \State file $\gets$ open(filename)
+            \If{file}
+                \While{first\_line not reached}
+                    \State buffer $\gets$ line
+                \EndWhile
+                \State build\_structure(structure, size)
+                \If{build failed}
+                    \State \Return error ENOMEM
+                \EndIf
+                \State structure $\gets$ file values
+                \State \Return 0
+            \Else
+                \State \Return error ENOENT
+            \EndIf
+        \EndFunction
+    \end{algorithmic}
+\end{framed}
 
 \subsection{Tests}
 
@@ -365,7 +411,7 @@ Pour le problème, trois fichiers de données différents sont nécessaires :
 
 \subsection{Compilation et Lancement}
 
-Le Makefile n'estpas indispensable à la compilation du projet.
+Le Makefile n'est pas indispensable à la compilation du projet.
 Les librairies doivent \^etre compilées puis liées au main (cela peut se faire en utilisant seulement gcc car les librairies n'utilisent pas MPI, mais mpicc est recommandé pour raison de compatibilité).\\
 
 Le programme main est compilé en utilisant mpicc, le compilateur C de la librairie MPI. Les différents flags de compilations sont (viennent de gcc): 
@@ -391,11 +437,17 @@ Celui ci à 3 fonctions :
     \item \texttt{usage} qui affiche l'usage de la Command Line Interface
 \end{itemize}
 
-Le programme peut recevoir les argument "-v" pour passer en mode verbose ou -h/-? pour afficher l'usage.
+Le programme peut recevoir les argument "-v" pour passer en mode verbose ou "-h/-?" pour afficher l'usage.
 
-Les fichiers de données sont hardcodés dans le code source, mais cette partie est facilement modifiable pour pouvoir spécifier le chemin du fichier en question.\\
+Les fichiers de données sont hardcodés dans le code source, mais cette partie est facilement modifiable pour pouvoir spécifier le chemin des fichiers en question.\\
 
-Ce programme effectue la méthode de Jacobi en asynchrone utilisant MPI\_Isend, MPI\_Irecv et MPI\_Wait.\\
+Ce programme effectue la méthode de Jacobi en asynchrone utilisant :
+
+\begin{itemize}
+    \item MPI\_Isend qui envoi des données de manière asynchrone 
+    \item MPI\_Irecv qui reçoit des données de manière asynchrone
+    \item MPI\_Wait qui permet d'attendre  la réalisation d'un requ\^ete asynchrone (send ou recv)\\
+\end{itemize}
 
 Le principe de communication est le suivant :\\
 
@@ -414,7 +466,7 @@ Par exemple, une matrice $3 \times 3$ sur $2$ processeurs serait découpées ave
 \end{align*}
 
 
-Ensuite, chaque processeur dispose d'une variable \texttt{global\_result} qui contient $x^{(k)}$ à l'étape $k$ et de \texttt{local\_result} qui après itération contiendra les sous vecteurs de $x^{(k+1)}$ àl'étape $k$.\\
+Ensuite, chaque processeur dispose d'une variable \texttt{global\_result} qui contient $x^{(k)}$ à l'étape $k$ et de \texttt{local\_result} qui après itération contiendra les sous vecteurs de $x^{(k+1)}$ à l'étape $k$.\\
 
 Il y'a également un tableau \texttt{continue\_iterate} qui pour chaque ligne de chaque processeur contient un booleén qui permet de décider si l'on continue d'itérer sur la ligne en question.
 
@@ -422,11 +474,11 @@ Au début de chaque itération, les processeurs envoient la valeur locale de \te
 
 Les appels à la fonction MPI\_Irecv sont suivi généralement d'un appel à MPI\_Wait qui va attendre que la reception soit effective car elle est nécéssaire à l'opération qui suit.\\
 
-En revanche nous ne mettons pas de MPI\_Wait après MPI\_Isend car les données ne sont mutés qu'après récéption de la données suivante, et la req\^eted'envoi sera donc terminée à ce moment.\\
+En revanche nous ne mettons pas de MPI\_Wait après MPI\_Isend car les données ne sont mutés qu'après récéption de la données suivante, et la requ\^ete d'envoi sera donc terminée à ce moment.\\
 
 Ensuite on applique la formule de récurrence sur ces nouvelles données que l'on stock dans \texttt{local\_result}.\\
 
-Pour le test d'arr\^et, comme nous somme en norme infinie, on peut calculer l'erreur relative de chaque composante $e^{(k)}_{i} = x^{(k+1)}[i] - x^{(k)}[i]$)
+Pour le test d'arr\^et, comme nous somme en norme infinie, on peut calculer l'erreur relative de chaque composante $e^{(k)}_{i} = x^{(k+1)}[i] - x^{(k)}[i]$
 
 On va alors tester chaque ligne de chaque processeur et ne continuer l'itération de celles-ci que si la convergence est atteinte :
 
@@ -434,13 +486,20 @@ On va alors tester chaque ligne de chaque processeur et ne continuer l'itératio
 e^{(k)}_{i} \leq 1.10^{-6}
 \]
 
-Pour cela, on modifie à l'interieur de chaque processeur la tableau de booléens \texttt{continue\_iterate}, puis une fois que le tableau ne contiens que des \texttt{false}, on envoi la valeur false au processeur root pour que celui ci fasse un masque binaire de tout les autres pour décider de stoper la boucle principale. La limite d'itérations fixée à 50000 est arbitraire et pourrait certainement \^etre abaissée.
+Pour cela, on modifie à l'interieur de chaque processeur la tableau de booléens \texttt{continue\_iterate}, puis une fois que le tableau ne contiens que des \texttt{false}, on envoi la valeur false au processeur root pour que celui ci fasse un masque binaire de tout les autres pour décider de stoper la boucle principale. La limite d'itérations fixée à 500 est arbitraire et pourrait certainement \^etre abaissée.
 
-\subsection{Erreurs}
+\subsection{Erreurs} \label{err}
 
 L'architecture de code de ce programme suit les standard de développement basés sur le status d'une opération. En effet, dans ce programme beaucoup de fonctions sont succeptibles d'échouer (la manipulation de fichier, l'allocation mémoire, ...).
 
 Dans cette optique, les fonctions des librairies  utilisent des pointeurs sur les variables, qui sont alors mutées en place, et les fonctions renvoient un code stipulant la réussite ou l'échec de l'opération an utilisant les code d'erreurs standards de la librairie \texttt{errno.h}.
+
+Les codes utilisés ici sont :
+\begin{itemize}
+    \item Code Erreur 2, \texttt{ENOENT} : "No such file or directory"
+    \item Code Erreur 12, \texttt{ENOMEM} : "Out of memory"
+    \item Code Erreur 22, \texttt{EINVAL} : "Invalid argument"
+\end{itemize}
 
 \newpage
 
