@@ -1,0 +1,131 @@
+\documentclass{beamer}
+%
+% Choose how your presentation looks.
+%
+% For more themes, color themes and font themes, see:
+% http://deic.uab.es/~iblanes/beamer_gallery/index_by_theme.html
+%
+\mode<presentation>
+{
+  \usetheme{metropolis}      % or try Darmstadt, Madrid, Warsaw, ...
+  \usecolortheme{default} % or try albatross, beaver, crane, ...
+  \usefonttheme{default}  % or try serif, structurebold, ...
+  \setbeamertemplate{navigation symbols}{}
+  \setbeamertemplate{caption}[numbered]
+}
+
+\usepackage[frenchb]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{extramarks} % Required for headers and footers
+\usepackage{listings} % Required for insertion of code
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{textcomp}
+\usepackage{stmaryrd}
+\usepackage{framed}
+
+\lstset{texcl=true, columns=flexible,basicstyle=\ttfamily}
+
+\title[Parallélisation de l'algorithme de Jacobi]{Projet : Parallélisation de la Méthode de Jacobi pour la résolution de systèmes linéaires}
+\author{Plessia Stanislas}
+\institute{}
+\date{Mars 2018}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\section{Méthode de Jacobi}
+
+\subsection{Définition du problème}
+
+\begin{frame}{Définition du problème}
+  Soit :
+  \begin{itemize}
+   \item $n \in \mathbb{N}$ 
+   \item $A = (a_{i,j})_{i,j \in \llbracket 1,n \rrbracket^2}$ matrice carrée de taille $n$
+   \item $b = (b_i)_{i \in \llbracket 1,n \rrbracket}$ vecteur de taille $n$.
+  \end{itemize}
+
+  On cherche alors le vecteur $x = (x_i)_{i \in \llbracket 1,n \rrbracket}$ tel que :
+
+  \begin{equation} 
+      \label{eq:probleme}
+      Ax = b
+  \end{equation}
+\end{frame}
+
+\subsection{Résolution}
+
+\begin{frame}{Résolution: Decomposition de $A$}
+  On décompose $A$ en deux matrices :
+  \[
+  A =
+    \begin{pmatrix}
+    a_{1,1} & 0 & \cdots & 0 \\
+    0 & a_{2,2} & \cdots & 0 \\
+    \vdots  & \vdots  & \ddots & \vdots  \\
+    0 & 0 & \cdots & a_{n,n}
+   \end{pmatrix}
+   +
+    \begin{pmatrix}
+    0 & a_{1,2} & \cdots & a_{1,n} \\
+    a_{2,1} & 0 & \cdots & a_{2,n} \\
+    \vdots  & \vdots  & \ddots & \vdots  \\
+    a_{n,1} & a_{n,2} & \cdots & 0
+   \end{pmatrix}
+  \]
+
+  Notons $D$ la matrice diagonale et $R$ le reste.
+  Comme on suppose les coefficiens diagonaux non nuls, $D$ est trivialement inversible et on peut transformer l'équation \eqref{eq:probleme} :
+  \[
+    x = D^{-1}(b - Rx)
+  \]
+\end{frame}
+
+\begin{frame}{Résolution: Solution Itérative}
+
+  Un solution itérative peut \^etre construite de la manière suivante :
+  \[
+      \left\{
+      \begin{array}{l}
+          x^{(0)} = \vec{0}\\
+          x^{(k+1)} = D^{-1}( b - Rx^{(k)})
+      \end{array}
+      \right.
+  \]
+  D'après le théorème du point fixe, on peut montrer qu'on a alors :
+  \[
+  \lim_{k \to \infty}x^{(k)} = x \Leftrightarrow \rho(-D^{-1}R) < 1
+  \]
+  On obtient alors la formule de récurrence sur les coefficients :
+  \begin{align}
+      \forall k \in \mathbb{N}, \forall i \in \llbracket 1,n \rrbracket, 
+      \qquad x_{i}^{(k+1)} = \dfrac{1}{a_{i,i}}(b_i - \sum_{i \neq j}a_{i,j} x^{(k)}_j)
+  \end{align}
+
+\end{frame}
+
+\begin{frame}{Résolution: Condition suffisante de convergence}
+  Une condition suffisante pour assurer la convergence de la méthode de Jacobi est la suivante:\\
+
+  Soit $\lambda$ valeur propre de $C$ et $y_{\lambda}$le vecteur propre associé, on a :
+  \begin{align*}
+    |\lambda|\cdot||y_{\lambda}||_{\infty} &= |\dfrac{1}{a_{i,i}}| \cdot |\sum_{j \neq i}a_{i,j}y_{\lambda{j}}|\\
+    &\leq |\dfrac{1}{a_{i,i}}| \cdot \sum_{j \neq i}|a_{i,j}| \cdot ||y_\lambda||_{\infty}
+  \end{align*} 
+
+  Donc on a $\forall (i,j) \in \llbracket 1,n \rrbracket^2 \quad |a_{i,i}| > \sum_{i \neq j}|a_{i,j}| \implies \rho(C) < 1$,\\
+  ie $C$ est a diagonale strictement dominante.
+\end{frame}
+
+\section{Implémentation de la Méthode}
+
+\begin{frame}
+\end{frame}
+
+\end{document}

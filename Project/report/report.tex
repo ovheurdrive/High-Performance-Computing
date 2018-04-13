@@ -86,7 +86,7 @@
 % NAME AND CLASS SECTION
 %----------------------------------------------------------------------------------------
 
-\newcommand{\hmwkTitle}{Project : Jacobi Method in Parallel for Equation resolution} % Assignment title
+\newcommand{\hmwkTitle}{Parallélisation de la Méthode de Jacobi} % Assignment title
 \newcommand{\hmwkClass}{High Performance Computing} % Course/class
 \newcommand{\hmwkClassInstructor}{F. Magoules} % Teacher/lecturer
 \newcommand{\hmwkAuthorName}{Plessia Stanislas} % Your name
@@ -204,30 +204,36 @@ En effet,en écrivant la formule de récurrence pour un élement du vecteur $x^{
 
 \begin{align}
     \forall k \in \mathbb{N}, \forall i \in \llbracket 1,n \rrbracket, 
-    \qquad x_{i}^{(k+1)} = \dfrac{1}{a_{i,i}}(b_i - \sum_{i \neq j}a_{i,j} \times x^{(k)}_j)
+    \qquad x_{i}^{(k+1)} = \dfrac{1}{a_{i,i}}(b_i - \sum_{i \neq j}a_{i,j} x^{(k)}_j)
 \end{align}
 
 La seul contrainte devient alors que chaque processeur doit conna\^itre toutes les composantes de $x^{(k)}$ afin de pouvoir itérer, et il faut donc les communiquer, ce que nous feront en utilisant la bibliothèque MPI.
 
 \subsection{Preuve et Convergence}
 
-D'après le théorème de la méthode du point fixe, on sait que la suite $x_{n+1} = f(x_n)$ converge si la fonction $f$ est contractante aka $k$-lipshitzienne avec $k < 1$
+D'après le théorème de la méthode du point fixe, on sait que la suite $x_{n+1} = f(x_n)$ converge si la fonction $f$ est contractante ie $k$-lipshitzienne avec $k < 1$
 
-La matrice $D^{-1}R$ étant une application linéaire, trouvons une condition nécessaire et suffisante pour qu'elle soit contractante \\
+Notons $C = -D^{-1}R$, $d = D^{-1}b$ et 
+\begin{align*}
+    \mathcal{F} : &\mathbb{R} \longrightarrow \mathbb{R} \\
+    &u \longrightarrow Cu + d
+\end{align*}
 
-Soit $a,b$ deux vecteurs dans $\mathbb{R}^n$, $k \in [0,1[$ et notons $C = D^{-1}R$ , 
+On veut trouver un condition nécessaire et suffisante pour que $\mathcal{F}$ soit une application contractante.\\
+Or, on a :\\
 
-\begin{align}
-    &|Ca - Cb| \leq k|a-b|\\
-    \Leftrightarrow \qquad & ||C - kI|| \leq 0
-\end{align}
+Soit $a,b$ deux vecteurs dans $\mathbb{R}^n$,\\
+\begin{align*}
+    ||\mathcal{F}(a) - \mathcal{F}(b)|| &= ||Ca - Cb||\\
+    &\leq||C||_{\infty} \cdot ||a-b||
+\end{align*}
 
-Cela revient à dire que le rayon spectral de la matrice $C$ noté $\rho(C)$ doit \^etre strictement inférieur à 1
+On doit donc avoir $||C||_{\infty} < 1$ ce qui revient à dire que le rayon spectral de la matrice $C$ noté $\rho(C)$ doit \^etre strictement inférieur à 1
 
 On peut donc affirmer que :
 
 \[
-\lim_{k \to \infty}x^{(k)} = x \Leftrightarrow \rho(C) = \rho(D^{-1}R) < 1
+\lim_{k \to \infty}x^{(k)} = x \Leftrightarrow \rho(C) = \rho(-D^{-1}R) < 1
 \]
 
 \newpage 
@@ -238,14 +244,14 @@ Soit $\lambda$ valeur propre de $C$ ie $\forall y \in \mathbb{R}^n, Cy = \lambda
 
 On a alors, $\forall (i,j) \in \llbracket 1,n \rrbracket^2$
 
-\begin{align}
+\begin{align*}
     &||\lambda y||_{\infty} = |\sum_{j=1}^{n}c_{i,j}y_j\\
     \Leftrightarrow \qquad & \lambda||y||_{\infty} = |\sum_{j \neq i}\dfrac{a_{i,j}}{a_{i,i}}y_j|\\
-    \Leftrightarrow \qquad & \lambda||y||_{\infty} = |\dfrac{1}{a_{i,i}}| \times |\sum_{j \neq i}a_{i,j}y_j|\\
-    \Leftrightarrow \qquad & \lambda||y||_{\infty} \leq |\dfrac{1}{a_{i,i}}| \times \sum_{j \neq i}|a_{i,j}y_j|\\
-    \Leftrightarrow \qquad & \lambda||y||_{\infty} \leq |\dfrac{1}{a_{i,i}}| \times \sum_{j \neq i}|a_{i,j}| \times ||y||_{\infty}\\
-    \Leftrightarrow \qquad & \lambda \leq |\dfrac{1}{a_{i,i}}| \times \sum_{j \neq i}|a_{i,j}|
-\end{align}
+    \Leftrightarrow \qquad & \lambda||y||_{\infty} = |\dfrac{1}{a_{i,i}}| \cdot |\sum_{j \neq i}a_{i,j}y_j|\\
+    \Leftrightarrow \qquad & \lambda||y||_{\infty} \leq |\dfrac{1}{a_{i,i}}| \cdot \sum_{j \neq i}|a_{i,j}y_j|\\
+    \Leftrightarrow \qquad & \lambda||y||_{\infty} \leq |\dfrac{1}{a_{i,i}}| \cdot \sum_{j \neq i}|a_{i,j}| \cdot ||y||_{\infty}\\
+    \Leftrightarrow \qquad & \lambda \leq |\dfrac{1}{a_{i,i}}| \cdot \sum_{j \neq i}|a_{i,j}|
+\end{align*}
 
 Une condition suffisante pour que $\lambda < 1$ serait alors :
 
@@ -261,10 +267,10 @@ ie $A$ est à diagonale strictement dominante
 Afin de mesurer la convergence de la méthode de Jacobi (etd'avoir une condition d'arr\^et), on défini le vecteur erreur relative suivant :
 
 \[
-e^{(k+1)} = ||x^{(k+2)} - x^{(k+1)}||_{\infty} = ||-C(x^{(k+1)} - x^{(k)})||_{\infty} = ||-C||_{\infty}e^{(k)}
+e^{(k+1)} = ||x^{(k+2)} - x^{(k+1)}||_{\infty} = ||C(x^{(k+1)} - x^{(k)})||_{\infty} = ||C||_{\infty}e^{(k)}
 \]
 
-On a donc $e^{(k)} = (-1)^k||C||_{\infty}^ke^{(0)}$
+On a donc $e^{(k)} = ||C||_{\infty}^ke^{(0)}$
 
 On a de plus le vecteur erreur :
 
@@ -278,19 +284,19 @@ En effet,
 
 \begin{align}
     e^{(k)} &= ||x^{(k+1)} - x^{(k)}||_{\infty}\\
-    &= ||D^{-1}b - Cx^{(k)} - x^{(k)}||_{\infty}\\
-    &= ||x + Cx - Cx^{(k)} - x^{(k)}||_{\infty}\\
-    &= ||x - x^{(k)} + C(x - x^{(k)})||_{\infty}\\
-    &= ||(C + I)(x - x^{(k)})||_{\infty}
+    &= ||Cx^{(k)} + d - x^{(k)}||_{\infty}\\
+    &= ||Cx^{(k)} + x - Cx - x^{(k)}||_{\infty}\\
+    &= ||x - x^{(k)} - C(x - x^{(k)})||_{\infty}\\
+    &= ||(-C + I)(x - x^{(k)})||_{\infty}
 \end{align}
 
 On obtient alors par inégalité triangulaire: 
 
 \[
-e^{(k)} = ||I + C||_{\infty}\epsilon^{(k)} \leq \epsilon^{(k)} + ||C||_{\infty}\epsilon^{(k)}
+e^{(k)} = ||I - C||_{\infty}\epsilon^{(k)} \leq \epsilon^{(k)} + ||C||_{\infty}\epsilon^{(k)}
 \]
 
-Et comme on a vu précedemment que le rayon spectrale de $C$ est nécessairement inférieur à 1, et donc sa norme est également inférieure à 1 on a donc :
+Et comme on a vu précedemment la norme infinie de la matrice $C$ est strictement inférieure à 1 on a donc :
 \[
 e^{(k)} \leq 2\epsilon^{(k)}
 \]
