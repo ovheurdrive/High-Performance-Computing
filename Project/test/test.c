@@ -20,7 +20,7 @@ int main( int argc, char* argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get current process id
   MPI_Comm_size(MPI_COMM_WORLD, &size); // get number of processes
 
-  FILE* metadata_file = fopen("data/metadata_t.txt", "r");
+  FILE* metadata_file = fopen("data/metadata_test.txt", "r");
   int rows, col;
   if( fscanf(metadata_file, "%d %d", &rows, &col) < 2 ){
     fclose(metadata_file);
@@ -42,7 +42,7 @@ int main( int argc, char* argv[]) {
   display_matrix(&mtx, "Matrix random : ");
   free_matrix(&mtx);
 
-  if( (ret = read_matrix_from_file(&mtx, "data/matrix_t.txt", 0, rows, col)) != 0) {
+  if( (ret = read_matrix_from_file(&mtx, "data/matrix_test.txt", 0, rows, col)) != 0) {
     fprintf(stderr, "Error when constructing matrix from file in proc %d\n", rank);
     MPI_Abort(MPI_COMM_WORLD, ret);
   }
@@ -65,7 +65,7 @@ int main( int argc, char* argv[]) {
   display_vector(&vect, "Vector random : ");
   free_vector(&vect);
 
-  if( (ret = read_vector_from_file(&vect, "data/vector_t.txt", 0, col)) != 0) {
+  if( (ret = read_vector_from_file(&vect, "data/vector_test.txt", 0, col)) != 0) {
     fprintf(stderr, "Error when constructing vector from file in proc %d\n", rank);
     free_matrix(&mtx);
     MPI_Abort(MPI_COMM_WORLD, ret);
