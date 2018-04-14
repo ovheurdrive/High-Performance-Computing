@@ -1,0 +1,152 @@
+%----------------------------------------------------------------------------------------
+% PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass{article}
+
+\usepackage{fancyhdr} % Required for custom headers
+\usepackage{lastpage} % Required to determine the last page for the footer
+\usepackage{extramarks} % Required for headers and footers
+\usepackage[usenames,dvipsnames]{color} % Required for custom colors
+\usepackage{graphicx} % Required to insert images
+\usepackage{courier} % Required for the courier font
+\usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
+\usepackage{framed}
+\usepackage[utf8]{inputenc}
+\usepackage{stmaryrd}
+\usepackage{algpseudocode}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+% Margins
+\topmargin=-0.45in
+\evensidemargin=0in
+\oddsidemargin=0in
+\textwidth=6.5in
+\textheight=9.0in
+\headsep=0.25in
+
+\linespread{1.1} % Line spacing
+
+% Set up the header and footer
+\pagestyle{fancy}
+\lhead{\hmwkAuthorName} % Top left header
+\chead{\hmwkTitle} % Top center head
+\rhead{\firstxmark} % Top right header
+\lfoot{\lastxmark} % Bottom left footer
+\cfoot{} % Bottom center footer
+\rfoot{Page\ \thepage\ sur\ \protect\pageref{LastPage}} % Bottom right footer
+\renewcommand\headrulewidth{0.4pt} % Size of the header rule
+\renewcommand\footrulewidth{0.4pt} % Size of the footer rule
+
+\setlength\parindent{0pt} % Removes all indentation from paragraphs
+
+%----------------------------------------------------------------------------------------
+% NAME AND CLASS SECTION
+%----------------------------------------------------------------------------------------
+
+\newcommand{\hmwkTitle}{Dépendances et parallélisation} % Assignment title
+\newcommand{\hmwkClass}{High Performance Computing} % Course/class
+\newcommand{\hmwkAuthorName}{Plessia Stanislas} % Your name
+%----------------------------------------------------------------------------------------
+% TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title{
+\LARGE{\textbf{\hmwkClass}}\\
+\vspace{0.5in}
+\large{\textbf{\hmwkTitle}}
+\vspace{3in}
+}
+
+\author{\textbf{\hmwkAuthorName}}
+\date{Février 2018} % Insert date here if you want it to appear below your name
+
+\newtheorem*{theorem}{Théorème}
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+\maketitle
+
+\newpage
+
+\subsection*{Parallélisation d'une boucle}
+
+
+\begin{theorem}
+Une boucle de programme est parallélisable si et seulement si deux instructions ou séries d'instructions associées à des itérations différentes ne présentent aucunes dépendances de données ou de sorties.
+\end{theorem}
+
+\begin{proof}[Preuve]
+Soit $B$ une boucle de programme.\\
+Pour chaque itération de $B$ d'indice $i \in \llbracket 1,n \rrbracket$, nous notons $B_i$ l'ensemble des instructions de cette itération.\\
+
+Nous cherchons à montrer que $\forall (i,j) \in \llbracket 1,n \rrbracket^2$, $B_i$ et $B_j$ sont permutables (ie le programme est parallélisable) si et seulement si $B_i$ et $B_j$ n'ont aucune dépendances de données ou de sorties.\\
+
+$\Rightarrow$ Supposons $B$ parallélisable, i.e. sa sortie ne dépend pas de l'ordre des $B_i \forall i$.\\
+
+Supposons qu'il existe une dépendance de données: $\exists (i,j), In(B_i) \cap Out(B_j) \neq \emptyset$.\\
+
+Dans ce cas, commme $Out(B_i) \gets In(B_i)$, $Out(B_i)$ dépend de $Out(B_j)$
+La sortie de $B_i$ dépend de l'exécution ou non de $B_j$ : on arrive à une contradiction.\\
+
+Supposons maintenant qu'il existe une dépendance de sorties. $\exists (i,j), Out(B_i) \cap Out(B_j) \neq \emptyset$.
+On reviens au cas précédent ou la sortie de $B_i$ va dépendre de l'éxecution ou non de $B_j$ : on a de nouveau une contradiction.\\
+
+$\Leftarrow$ Supposons qu'il n'y ait aucune dépendance dans $B$.\\
+Soit $s$ la sortie d'une instruction : $\exists! k, s \in Out(B_k)$.\\
+
+Par indépendance de sorties, $k$ est unique.\\
+On sait donc que $s$ ne dépend que de $In(B_k)$.\\
+
+Par indépendance de données, $\forall i \neq k, In(B_k) \cap Out(B_i) = \emptyset$.\\
+Donc $s$ ne dépend que de $B_k$, i.e. $s$ ne dépend pas de l'ordre d'exécution.\\
+
+$B$ est donc parallélisable.
+\end{proof}
+
+\newpage
+
+\begin{theorem}
+Les deux boucles imbriquées d'indices $i$ et $j$ sont permutables si et seulement si il n'existe pas de dépendances de données ou de sorties entre des instances $(i+k_i, j-k_j)$ ou $(i-k_i, j+k_j)$ et l'instance $(i,j)$, $(k_i, k_j) \in \mathbb{N}^*$
+\end{theorem}
+
+\begin{proof}[Preuve]
+La permutation des boucles ne va changer que partiellement l'ordre d'exécution.\\
+Pour chaque instance $(i,j)$, on note:
+\begin{itemize}
+\item $After_{1}(i,j)$ l'ensemble des instructions après celle d'indice $(i,j)$ lorsque $j$ est à l'interieur : ce sont les instances $(i,j+k_j)$ ou $(i+k_i,j+l_j)$ avec $k_i,k_j \in \mathbb{N}^*$ et $l_j \in \mathbb{Z}$
+\item $After_{2}(i,j)$ l'ensemble des instructions après celle d'indice $(i,j)$ lorsque $i$ est à l'interieur : ce sont les instances $(i+l_i,j+k_j)$ ou $(i+k_i,j)$ avec $k_i,k_j \in \mathbb{N}^*$ et $l_i \in \mathbb{Z}$
+\item $Before_{1}(i,j)$ l'ensemble des instructions après celle d'indice $(i,j)$ lorsque $j$ est à l'interieur : ce sont les instances $(i,j-k_j)$ ou $(i-k_i,j+l_j)$ avec $k_i,k_j \in \mathbb{N}^*$ et $l_j \in \mathbb{Z}$
+\item $Before_{2}(i,j)$ l'ensemble des instructions après celle d'indice $(i,j)$ lorsque $i$ est à l'interieur : ce sont les instances $(i+l_i,j-k_j)$ ou $(i-k_i,j)$ avec $k_i,k_j \in \mathbb{N}^*$ et $l_i \in \mathbb{Z}$
+\end{itemize}
+
+On peut permuter si et seulement si, pour chaque instruction $(i,j)$, il n'y a aucune dépendance de données ou de sorties entre $(i,j)$ et les autres instructions qu'on permute.\\
+
+Ces instructions sont $After_{1}(i,j) \cap Before_{2}(i,j)$ et $After_{2}(i,j) \cap Before_{1}(i,j)$.\\
+
+Soit l'instance $(p,q) \in After_{1}(i,j) \cap Before_{2}(i,j)$.
+
+\[
+\left\{
+    \begin{array}{ll}
+        (p,q) &= (i,j+k_j) \mbox{ ou } (i+k_i,j+l_j), (k_i,k_j) \in \mathbb{N}^*$ et $l_j \in \mathbb{Z}\\
+        (p,q) &= (i+l_i,j-k_j) \mbox{ ou } (i-k_i,j), (k_i,k_j) \in \mathbb{N}^*$ et $l_i \in \mathbb{Z}
+    \end{array}
+\right.
+\mathrm{soit} ~~
+\left\{
+    \begin{array}{l}
+        p = i+k_i  \\
+        q = j-k_j
+    \end{array}
+\right.
+\]
+
+De la même façon, $After_{2}(i,j) \cap Before_{1}(i,j)$ donne $(p,q) = (i-k_i, j+k_j)$.\\
+
+Donc les boucles sont permutables si et seulement si, $\forall (i,j), \forall (k_i, k_j) \in \mathbb{N}^*$, il n'y a aucune  indépendance de données entre les instances $(i,j)$ et $(i-k_i, j+k_j)$ ou $(i+k_i, j-k_j)$.
+
+\end{proof}
+
+\end{document}

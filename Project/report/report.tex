@@ -506,7 +506,7 @@ Les codes utilisés ici sont :
 
 \section{Résultats}
 
-\subsection{Performances}
+\subsection{Mesures des performances}
 
 Pour mesurer les performances génerales du programme, j'ai fait tourner le script bash suivant
 
@@ -543,7 +543,7 @@ Ce programme ce situe dans le dossier \textbf{/data} et se nomme \texttt{generat
 
 Lancement : \texttt{python3 generate\_random\_mtx\_vec.py <size>}\\
 
-Il génère une matrice carré et un vecteur de taille \textbf{argv[1]}, avec des coefficients entre 100 et 150 pour la diaginale, et entre -2 et 2 pour les 9 lignes de chaque coté de la diagonale ( on a bien $2*2*9 < 100 $)
+Il génère une matrice carré et un vecteur de taille \textbf{argv[1]}, avec des coefficients entre 100 et 150 pour la diagonale, et entre -2 et 2 pour les 9 lignes de chaque coté de la diagonale ( on a bien $2*2*9 < 100 $)
 
 \subsection{Analyse des performances et des résultats}
 
@@ -581,6 +581,8 @@ Je n'ai réalisé que l'implémentation purement asynchrone du programme, j'aura
 
 Je n'ai pas permis la modification desfichier de données via command line arguments, cela aurait rajouté de l'implémentation inutile de vérification d'existence de fichier, etc ..., Ce qui n'est pasl'objectif de l'exercice.\\
 De plus, le script python génère des fichiers nommés \texttt{object\_t.txt} (object pouvant \^etre matrix, vector ou metadata), alors que dans le code source, nous chargeons \texttt{object.txt}.\\
-Cela peut \^etre aisément changé dans le code source, ou alors il faut remplacer les fichier de données fournis.
+Cela peut \^etre aisément changé dans le code source, ou alors il faut remplacer les fichier de données fournis.\\
+
+Enfin, j'ai remarqué que le temps d'execution variait d'une fois à l'autre, ce que je n'ai pas réussi à expliquer.
 
 \end{document}
