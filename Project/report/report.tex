@@ -490,20 +490,97 @@ Pour cela, on modifie à l'interieur de chaque processeur la tableau de booléen
 
 \subsection{Erreurs} \label{err}
 
-L'architecture de code de ce programme suit les standard de développement basés sur le status d'une opération. En effet, dans ce programme beaucoup de fonctions sont succeptibles d'échouer (la manipulation de fichier, l'allocation mémoire, ...).
+L'architecture de code de ce programme suit les standard de développement basés sur le status d'une opération. En effet, dans ce programme beaucoup de fonctions sont succeptibles d'échouer (la manipulation de fichier, l'allocation mémoire, ...).\\
 
-Dans cette optique, les fonctions des librairies  utilisent des pointeurs sur les variables, qui sont alors mutées en place, et les fonctions renvoient un code stipulant la réussite ou l'échec de l'opération an utilisant les code d'erreurs standards de la librairie \texttt{errno.h}.
+Dans cette optique, les fonctions des librairies  utilisent des pointeurs sur les variables, qui sont alors mutées en place, et les fonctions renvoient un code stipulant la réussite ou l'échec de l'opération an utilisant les code d'erreurs standards de la librairie \texttt{errno.h}.\\
 
 Les codes utilisés ici sont :
 \begin{itemize}
     \item Code Erreur 2, \texttt{ENOENT} : "No such file or directory"
     \item Code Erreur 12, \texttt{ENOMEM} : "Out of memory"
     \item Code Erreur 22, \texttt{EINVAL} : "Invalid argument"
+    \item Code Erreur -1 : Erreur générique
 \end{itemize}
 
 \newpage
 
 \section{Résultats}
 
+\subsection{Performances}
+
+Pour mesurer les performances génerales du programme, j'ai fait tourner le script bash suivant
+
+\begin{lstlisting}[language=bash]
+    for proco in {1..8}                                      
+    do                
+        time mpirun -n $proco bin/main | grep "total"
+    done
+\end{lstlisting}
+
+J'ai mesuré les performances du programme sur différents sets de données (donc ceux fournis avec le projet)
+\begin{itemize}
+    \item Les données fournies (de taille 7)
+    \item une matrice creuse de taille 20
+    \item une matrice creuse de taille 200
+    \item une matrice creuse de taille 1000\\
+\end{itemize}
+
+Les matrices utilisées n'ont pas étés fournies mais peuvent \^etre générées à l'aide du script python fourni
+
+Les résultats sont présentés dans l'image suivante :
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=250pt]{perf.png}
+    \caption{Performances et vitesse de convergence du programme avec différents sets de données}
+\end{figure}
+
+\subsection{Génération de matrices creuses de grande taille}
+
+Afin de générer des matrices de grandes tailles pour tester les performances du programme, j'ai écrit un script python qui construisait des matrices creuses aléatoires afin de conserver la caractéristique de matrice à diagonale strictement dominante.\\
+
+Ce programme ce situe dans le dossier \textbf{/data} et se nomme \texttt{generate\_random\_mtx\_vec.py}.\\
+
+Lancement : \texttt{python3 generate\_random\_mtx\_vec.py <size>}\\
+
+Il génère une matrice carré et un vecteur de taille \textbf{argv[1]}, avec des coefficients entre 100 et 150 pour la diaginale, et entre -2 et 2 pour les 9 lignes de chaque coté de la diagonale ( on a bien $2*2*9 < 100 $)
+
+\subsection{Analyse des performances et des résultats}
+
+Les résultats d'analyse des performances sont à première vu perturbants. En effet, on remarque que pour la méthode de Jacobi purement asynchrone, la performance n'augmente  pas liénairement en fonction du nombre de processeur.\\
+
+Cela peut s'expliquer par l'overhead d\^u à la communication entre les processeurs que j'ai obligé à attendre avant de muter les données; plus on augmente le nombre de processeurs plus le nombre de communications et donc d'attentes est important.\\
+
+On observe par contre de manière quasi-systématique unemeilleur performance sur un nombre de processeur pair par rapport à sur un nombre de processeurs impair.\\
+
+Une réinjection de la solution trouvée pour le set de données fourni dans l'équation d'origine en utilisant la fonction de produit vectoriel activé en mode debug, nous obtenons un résultat encourageant :
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=350pt]{convergence.png}
+    \caption{Réinjection de la solution itérative dans l'équation}
+\end{figure}
+
+Le vecteur d'origine étant $b = (6,7,5,8,6,1,3)$\\
+
+Je n'ai pas testé le debug sur des matrices de grande taille, mais il est probable qu'une désynchronisation se produise pouvant conduire à une erreur lors du calcul de l'erreur relative (éventuellement du au fait que je n'attends pas après les MPI\_Isend).
+
+\newpage
+
+\section{Conclusion}
+
+J'ai réalisé un programme en $C$ utilisant le librairie MPI afin d'utiliser la Méthode de Jacobi parallélisée de manière asynchrone pour résoudre un système linéaire.\\
+
+Ce programme a fourni des résultats très satisfaisants, convergeant rapidement et semblant réster relativement synchronisé.\\
+
+J'ai beaucoup appris, surtout sur la manière de paralléliser un programme en langage bas niveau, et j'ai pu me réaffirmer sur ma ma\^itrise du langage (m\^eme si cela ne fait peut-\^etre pas partie des objectifs du cours).\\
+
+J'ai de plus plusieurs remarques sur les pistes d'améliorations du programme ou de la démarche :\\
+
+Je n'ai réalisé que l'implémentation purement asynchrone du programme, j'aurais pu le rendre plus modulaire et lui permettre de fonctionner en synchrone ou en asynchrone + MPI\_Barrier afin de comparer les différence performance et de m'assurer de l'absence de désynchronisations.\\
+
+Je n'ai pas permis la modification desfichier de données via command line arguments, cela aurait rajouté de l'implémentation inutile de vérification d'existence de fichier, etc ..., Ce qui n'est pasl'objectif de l'exercice.\\
+De plus, le script python génère des fichiers nommés \texttt{object\_t.txt} (object pouvant \^etre matrix, vector ou metadata), alors que dans le code source, nous chargeons \texttt{object.txt}.\\
+Cela peut \^etre aisément changé dans le code source, ou alors il faut remplacer les fichier de données fournis.
 
 \end{document}
