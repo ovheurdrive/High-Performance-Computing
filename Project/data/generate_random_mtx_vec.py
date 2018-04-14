@@ -10,8 +10,8 @@ with open("matrix_t.txt", "w") as f1:
   for i in range(size):
     for j in range(size):
       if i == j:
-        f1.write(str(random.randint(10,15)) + ' ')
-      elif abs(i-j) < 4:
+        f1.write(str(random.randint(100,150)) + ' ')
+      elif abs(i-j) < 10:
         f1.write(str(random.randint(-2,2)) + ' ')
       else:
         f1.write('0' + ' ')

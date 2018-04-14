@@ -243,12 +243,13 @@ int main( int argc, char* argv[]) {
 
   if (rank == root)
   {
-    printf("Converged in %d iterations\nSolution found:\n", iterations);
+    printf("Converged in %d iterations\nSolution found :\n", iterations);
     display_vector(&global_result, "Result : ");
 
     if( verbose ) {
       Vector test_rest = { 0, NULL };
       Matrix global_matrix = { 0, 0, NULL };
+      // next function calls may fail, but it does not really matter as it is only debug info
       read_matrix_from_file(&global_matrix, "data/matrix.txt", 0, rows, col);
       build_vector(col, &test_rest);
       product_vector_matrix(&test_rest, &global_result, &global_matrix);
@@ -278,7 +279,6 @@ fail:
 }
 
 int product_vector_matrix(Vector* dest, Vector* vect, Matrix* mtx) {
-  int ret = 0;
   if( (vect->size != mtx->col) || (dest->size != mtx->rows) ) {
     return -1;
   }
@@ -287,11 +287,11 @@ int product_vector_matrix(Vector* dest, Vector* vect, Matrix* mtx) {
       dest->vector[i] += mtx->matrix[i][j] * vect->vector[j];
     }
   }
-  return ret;
+  return 0;
 }
 
 static void usage ( const char *prog )
 {
   fprintf(stderr, "Usage: mpirun -n n_proc %s [-h] [-v]\n\n", prog);
-  MPI_Abort(MPI_COMM_WORLD, 1);
+  MPI_Abort(MPI_COMM_WORLD, -1);
 }
