@@ -1,24 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Programming/Coding Assignment
-% LaTeX Template
-%
-% This template has been downloaded from:
-% http://www.latextemplates.com
-%
-% Original author:
-% Ted Pavlic (http://www.tedpavlic.com)
-%
-% Note:
-% The \lipsum[#] commands throughout this template generate dummy text
-% to fill the template out. These commands should all be removed when
-% writing assignment content.
-%
-% This template uses a Perl script as an example snippet of code, most other
-% languages are also usable. Configure them in the "CODE INCLUSION
-% CONFIGURATION" section.
-%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 %----------------------------------------------------------------------------------------
 % PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
 %----------------------------------------------------------------------------------------
@@ -31,13 +10,15 @@
 \usepackage[usenames,dvipsnames]{color} % Required for custom colors
 \usepackage{graphicx} % Required to insert images
 \usepackage{listings} % Required for insertion of code
-\usepackage{pxfonts} % Required for the courier font
 \usepackage{lipsum} % Used for inserting dummy 'Lorem ipsum' text into the template
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{stmaryrd}
-\usepackage{algpseudocode}
 \usepackage[frenchb]{babel}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+
 % Margins
 \topmargin=-0.45in
 \evensidemargin=0in
@@ -65,7 +46,6 @@
 % CODE INCLUSION CONFIGURATION
 %----------------------------------------------------------------------------------------
 
-\definecolor{MyDarkGreen}{rgb}{0.0,0.4,0.0} % This is the color used for comments
 \lstloadlanguages{C} % Load Perl syntax for listings, for a list of other languages supported see: ftp://ftp.tex.ac.uk/tex-archive/macros/latex/contrib/listings/listings.pdf
 \lstset{texcl=true, columns=flexible,basicstyle=\small\ttfamily}
 
@@ -83,25 +63,13 @@
         %
         % Put standard Perl functions not included in the default language here
         morekeywords={f, sequantial_computation, parallel_computation, printf},
-        morecomment=[l][\color{Blue}]{...}, % Line continuation (...) like blue comment
+        morecomment=[l][\color{Brown}]{...}, % Line continuation (...) like blue comment
         numbers=left, % Line numbers on left
         firstnumber=1, % Line numbers start with line 1
         numberstyle=\tiny\color{Blue}, % Line numbers are blue and small
         stepnumber=5, % Line numbers go in steps of 5
         texcl=true,
         columns=flexible
-}
-
-% Creates a new command to include a perl script, the first parameter is the filename of the script (without .pl), the second parameter is the caption
-\newcommand{\cscript}[2]{
-\begin{itemize}
-\item[]\lstinputlisting[caption=#2,label=#1]{#1.pl}
-\end{itemize}
-}
-
-
-\newcommand{\problemAnswer}[1]{ % Defines the problem answer command with the content as the only argument
-\noindent\framebox[\columnwidth][c]{\begin{minipage}{0.98\columnwidth}#1\end{minipage}} % Makes the box around the problem answer and puts the content inside
 }
 
 %----------------------------------------------------------------------------------------
@@ -111,7 +79,7 @@
 \newcommand{\hmwkTitle}{Calcul de $\pi$} % Assignment title
 \newcommand{\hmwkClass}{High Performance Computing} % Course/class
 \newcommand{\hmwkClassInstructor}{F. Magoules} % Teacher/lecturer
-\newcommand{\hmwkAuthorName}{Rémi Garde} % Your name
+\newcommand{\hmwkAuthorName}{Plessia Stanislas} % Your name
 
 %----------------------------------------------------------------------------------------
 % TITLE PAGE
@@ -149,123 +117,145 @@
 
 % To have just one problem per page, simply put a \clearpage after each problem
 
-\section{Pre-Processing}
+\section{Analyse}
 
 \subsection{Définition du problème}
-Le but de ce problème est d'obtenir une approximation de $\pi$, en se basant sur l'égalité
-$$\pi = \int_0^1 \frac{4}{1 + x^2} \mathrm{d}x$$
+
+On veut calculer une valeur approximative de $\pi$. Pour cela, nous allons utiliser le fait que $arctan(1) = \dfrac{\pi}{4}$\\
+
+Pour calculer cette valeur, nous allons effetuer le calcul suivant :\\
+
+\[
+   \pi = 4(arctan(1) - arctan(0)) = 4\int_0^1 \dfrac{d(arctan(x))}{dx}dx =  4\int_0^1 \dfrac{1}{1 + x^2} dx
+\]\\
 
 
 Ainsi en calculant une intégrale il est possible d'avoir une valeur approchée de $\pi$.
-Le calcul d'intégrale est un classique algorithmique, nous allons utiliser la méthode des trapèzes:
-on subdivise le domaine de l'intégrale $[a,b]$ en $n$ segments $[a_i, a_{i+1}]_{i\in\llbracket0,n-1\rrbracket}$
-avec $a_0 = a$, $a_{n} = b$ soit
-$$
-a_i = a + i \dot  \frac{b-a}{n} ~ \mathrm{et}
-\int_a^b f(x)\mathrm{d}x = \sum_{i=0}^{n-1}\left(\int_{a_i}^{a_{i+1}}f(x)\mathrm{d}x\right)
-$$
+Le calcul d'intégrale est un classique algorithmique, nous allons utiliser la méthode des trapèzes:\\
 
-Chaque petite intégrale est ensuite approchée par l'aire du trapèze de sommet $(a_i, a_{i+1}, f(a_{i+1}), f(a_i))$ soit
-$$\int_{a_i}^{a_{i+1}}f(x)\mathrm{d}x \approx \left(a_{i+1}-a_i)\right)\dot\frac{f(a_{i+1})+f({a_i})}{2} = \frac{b-a}{n}\dot\frac{f(a_{i+1})+f({a_i})}{2}$$
+On subdivise le domaine de l'intégrale $[a,b]$ en $n$ segments $[a_i, a_{i+1}]_{i\in\llbracket0,n-1\rrbracket}$
+avec $a_0 = a$, $a_{n} = b$,  soit :\\
+
+\[
+a_i = a + i \cdot \dfrac{b-a}{n} \mbox{ et } \int_a^b f(x)dx = \sum_{i=0}^{n-1}\left(\int_{a_i}^{a_{i+1}}f(x)dx\right)
+\]\\
+
+Chaque petite intégrale est ensuite approchée par l'aire du trapèze de sommet $(a_i, a_{i+1}, f(a_{i+1}), f(a_i))$ soit :\\
+
+\[
+\int_{a_i}^{a_{i+1}}f(x)dx \approx \left(a_{i+1}-a_i)\right)\cdot\dfrac{f(a_{i+1})+f({a_i})}{2} = \dfrac{b-a}{n}\cdot\dfrac{f(a_{i+1})+f({a_i})}{2}
+\]
+
+Donc : 
+
+\begin{align*}
+    \int_{a}^{b}f(x)dx &\approx \sum_{i=0}^{n-1}\left(a_{i+1}-a_i)\right)\cdot\dfrac{f(a_{i+1})+f({a_i})}{2} \\
+    &= \dfrac{b-a}{n}\cdot\sum_{i=0}^{n-1}\dfrac{f(a_{i+1})+f({a_i})}{2}\\
+    &= \dfrac{b-a}{n}\cdot\left(\sum_{i=1}^{n-1}f(a_{i}) + \dfrac{f(a) + f(b)}{2}\right)
+\end{align*}
 
 D'où le code:
 
 \begin{lstlisting}[style=ccode, morekeywords={f}]
-double trapeze_sequential (double a, double b, int n) {
-    double integral = 0; // result
-    double h = (b-a)/n; // step
-    for ( int i = 0 ; i < n ; i++ ) {
-        integral += h * (f(a + i*h) + f(a + (i+1)*h) / 2;
-    }
-    return integral;
+double trapeze(double a, double b, int n){
+  double h = (b - a)/n;
+  double integral = (f(a) + f(b))/2;
+  for( int k = 1; k < n; k++){
+    integral += f(a + k * h);
+  }
+  integral *= h;
+  printf("%lf, %lf, %lf, %d\n", integral, a, b, n);
+  return integral;
 }
 \end{lstlisting}
 
-\subsection{Optimisations}
-
-On remarque que chaque point sera évalué 2 fois, hormis $f(a)$ et $f(b)$, et que l'on peut factoriser par $h$.
-On peut donc simplifier en:
-
-\begin{lstlisting}[style=ccode, morekeywords={f}]
-double trapeze_sequential (double a, double b, int n) {
-    double integral = (f(b) + f(a)) / 2; // result
-    double h = (b-a)/n; // step
-    for ( int i = 1 ; i < n ; i++ ) {
-        integral += (f(a + i*h));
-    }
-    integral *= h;
-    return integral;
-}
-\end{lstlisting}
-
-\newpage
-\section{Processing}
+\section{Implémentation}
 \subsection{Parallélisation}
 
-Intéressons nous maintenant à paralléliser ce programme.
-À première vue, la boucle ne présente aucune dépendance est peut donc être distribuée facilement.
-Cependant, le nombre d'itérations $n$ va être le facteur principal de la précision du résultat, il serait donc préférable de le garder indépendant du nombre de processus.
+Nous devons à présent paralléliser ce programme.
+La boucle ne semble présenter aucune dépendance et peut donc être facilement parallélisée.\\
 
-Ainsi l'on va découper l'intégrale en $k$ sous intégrales, $k$ étant le nombre de noeuds de calcul voulus. Chaque processus va calculer sa part d'intégrale avec la méthode précédente. Le thread principal va ensuite sommer chacune des valeurs retournées par les autres processus.
+Les paramètres du problèmes sont alors : 
+\begin{itemize}
+    \item Le nombre de subdivision du domaine intégral $n$
+    \item Le nombre de processeur qui vont faire le calcul $p$
+\end{itemize}
+
+L'objectif est alors de découper l'intégrale en $p$ sous intégrales qui seront chacune calculée dans un processeur.
+Le résultat de chaque sous intégrale seraenvoyée au processeur \texttt{root} qui ajoutera les résultats pour afficher l'initégrale globale.\\
 
 \begin{lstlisting}[style=ccode, morekeywords={f, MPI_Recv, MPI_Send, trapeze_sequential}]
-int rank, size;
-MPI_Init(&argc, &argv);               // starts MPI
-MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get current process id
-MPI_Comm_size(MPI_COMM_WORLD, &size); // get number of processes
-if (rank == 0) {
-    double integral, sub_integral; // result
-    double h = (b - a) / n;        // step
-    // Evaluate the first part of the integral
-    integral = trapeze_sequential(a, a + (b - a) / size, n / size);
-    // Sum with the other sub integrals
-    for (int k = 1; k < size; k++)
-    {
-        printf("> Waiting for process %d to compute...\n", k);
-        MPI_Recv(&sub_integral, 1, MPI_DOUBLE, k, 0, MPI_COMM_WORLD,
-            MPI_STATUS_IGNORE);
-        integral += sub_integral;
-    }
-    // Printing the results
-    printf("> Result: \n%f\n", integral);
-    printf("> Error: %.3e\n", M_PI - integral);
-} else {
-    // Other process use directly the sequential computation
-    printf("> Calculation from process %d\n", rank);
-    double local_a = a + rank * (b - a) / size,
-            local_b = a + (rank + 1) * (b - a) / size;
+int main(int argc, char* argv[]){
+  double a = 0, b = 1;
+  int n = 24000; // default subdivision value
+  double integral;
+  if ( argc > 1){
+    n = atoi(argv[1]);
+  }
+  double pas = (b-a)/n;
 
-    // Evaluate the sub integral
-    double sub_integral =
-        trapeze_sequential(local_a, local_b, n / size);
-    // Send the result to the main process
-    MPI_Send(&sub_integral, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD);
+  int rank, size;
+  MPI_Init(&argc, &argv);               // starts MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get current process id
+  MPI_Comm_size(MPI_COMM_WORLD, &size); // get number of processes
+
+  switch(rank){
+    case 0:
+      integral = trapeze(a, a + pas * n / size, n / size );
+      double int_from_sub_proc;
+
+      for( int k = 1; k < size; k++){
+        printf("Receving data from proc %d\n", k);
+        MPI_Recv(&int_from_sub_proc, 1, MPI_DOUBLE, k, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        integral += int_from_sub_proc;
+      }
+      printf("Integral value : %lf, with error %.3e\n", integral, M_PI - integral);
+    break;
+    default:
+      printf("Calculating process %d\n", rank);
+      double loca = a + rank * pas * n / size;
+      double locb = loca + pas * n / size;
+
+      double inte = trapeze(loca, locb, n / size );
+      MPI_Send(&inte, 1, MPI_DOUBLE, 0, 0,  MPI_COMM_WORLD);
+    break;
+  }
+
+  MPI_Finalize();
 }
 \end{lstlisting}
 
 \newpage
 
-\section{Post-Processing}
+\section{Résultats}
 
 \subsection{Vitesse d'exécution}
-Essayons d'estimer le temps gagné en passant le calcul sur plusieurs processus.
-Tout d'abord, en comparant le temps d'exécution de l'algorithme séquentiel avec l'algorithme parallèle avec 1 seul thread, nous pouvons obtenir l'overhead dû à MPI : environ $10$ms. Pour comparer les temps d'exécution, j'ai lancé le programme sur des nombres de trapèzes $n$ différents et des nombres de processus $k$ différents.
+
+Essayons d'estimer le temps gagné en passant le calcul sur plusieurs processus.\\
+
+Les valeurs de n testées sont : $24\cdot10^k , k \in \llbracket 0,6\rrbracket$\\
 
 Pour $n<10^8$, la différence n'est pas sensible et le processeur n'a pas le temps de monter à 100\% d'utilisation.
-De façon étonnante, 4 processus ne permet d'être que 2 fois plus rapide que sur un seul processus. De plus lancer 3 processus est toujours légèrement plus lent que 2 processus.
-Il n'y a aucun intérêt à avoir plus de 4 processus ici dûs aux limitations de mon ordinateur : plus de processus ne seraient pas réellement calculés en même temps et il n'y a aucun gain de performance.
-\newpage
-\subsection{Précision}
-Pour comparer les précisions, j'utilise la constante $\pi$ de \textbf{math.h}.
-Le programme renvoie l'erreur relative à cette constante:
-\begin{lstlisting}[style=ccode, morekeywords={f}]
-printf("> Error: %.3e\n", M_PI - integral);
-\end{lstlisting}
-On prend soin de garder $n$ divisible par $k$ pour que les processus aient la même charge de travail et qu'ils aient chacun les même erreurs.
+De façon étonnante, Lecomportement n'est pas linéaire par rapport au nombre de processeurs, et semble perturbant pour certaines valeurs de $p$.\\
 
-Le nombre de processus affecte très peu la précision. Je suppose que l'on voie des différences dûes aux processus pour $n=240000$, puis l'on atteint les limites de précision des \lstinline[style=ccode]|double|. On remarque que à chaque pas (10 fois plus de trapèzes), la précision est multipliée par 100, ce qui est cohérent avec la majoration de l'erreur de cet algorithme:
-$$
-\left|\int_{a}^{b}f(x)\mathrm{d}x -T_n \right| \leq \frac{M(b-a)^3}{12n^2}
-$$
+J'ai fais l'experience sur un processeur \texttt{Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz} qui dispose de 4 coeurs physiques et de 8 coeurs logiques. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=300pt]{perf_pi.png}
+    \caption{Performance du programme en fonction de $n$ et de $p$}
+\end{figure}
+
+\subsection{Précision}
+
+Pour comparer les précisions, j'utilise la constante $\pi$ de \textbf{math.h}.
+On prend soin de garder $n$ divisible par $k$ pour que les processus aient la même charge de travail et qu'ils aient chacun les même erreurs.\\
+
+Le nombre de processus affecte très peu la précision. Je suppose que l'on voie des différences dûes aux processus pour $n=240000$, puis l'on atteint les limites de précision des \lstinline[style=ccode]|double|. On remarque que à chaque pas (10 fois plus de trapèzes), la précision est multipliée par 100, ce qui est cohérent avec la majoration de l'erreur de cet algorithme:\\
+
+\[
+\left|\int_{a}^{b}f(x)\mathrm{d}x -T_n \right| \leq \dfrac{M(b-a)^3}{12n^2}
+\]
+
 avec $T_n$ l'approximation avec $n$ trapèzes, $M$ constante dépendant de $f$ supposée de classe $\mathcal{C}^2$ sur $[a,b]$.
 \end{document}

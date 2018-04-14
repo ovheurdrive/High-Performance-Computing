@@ -20,7 +20,7 @@ double trapeze(double a, double b, int n){
 
 int main(int argc, char* argv[]){
   double a = 0, b = 1;
-  int n = 24000;
+  int n = 24000;  // default subdivision value
   double integral;
   if ( argc > 1){
     n = atoi(argv[1]);
